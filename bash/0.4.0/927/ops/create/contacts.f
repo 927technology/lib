@@ -109,7 +109,7 @@ $( [[ ! -z ${_contact_groups} ]]                          && ${cmd_printf} '%-1s
 $( [[ ! -z ${_email} ]]                                   && ${cmd_printf} '%-1s %-32s %-50s\n' "" email "${_email}" )
 $( [[ ! -z ${_host_notification_commands} ]]              && ${cmd_printf} '%-1s %-32s %-50s\n' "" host_notification_commands "${_host_notification_commands}" )
 $( [[ ! -z ${_host_notification_options} ]]               && ${cmd_printf} '%-1s %-32s %-50s\n' "" host_notification_options "${_host_notification_options}" )
-$( [[ ! -z ${_host_notification_period} ]]                && ${cmd_printf} '%-1s %-32s %-50s\n' "" host_notificaiton_period "${_host_notification_period}" )
+$( [[ ! -z ${_host_notification_period} ]]                && ${cmd_printf} '%-1s %-32s %-50s\n' "" host_notification_period "${_host_notification_period}" )
 $( [[ ! -z ${_host_notification_enabled} ]]               && ${cmd_printf} '%-1s %-32s %-50s\n' "" host_notifications_enabled "${_host_notification_enabled}" )
 $( [[ ! -z ${_name} ]] && [[ ${_template} == ${false} ]]  && ${cmd_printf} '%-1s %-32s %-50s\n' "" contact_name "${_name}" )
 $( [[ ! -z ${_name} ]] && [[ ${_template} == ${true} ]]   && ${cmd_printf} '%-1s %-32s %-50s\n' "" name "${_name}" )
