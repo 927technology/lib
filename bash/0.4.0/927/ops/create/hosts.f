@@ -90,10 +90,10 @@
 
 
   ## main
-  if [[ ! -z ${_json} ]] && [[ $( ${cmd_echo} ${_json} | ${cmd_jq} '.ops | length' ) > 0 ]]; then
+  if [[ ! -z ${_json} ]] && [[ $( ${cmd_echo} ${_json} | ${cmd_jq} '. | length' ) > 0 ]]; then
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
     
-    for host in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
+    for host in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '. | select(.enable == true)' ); do 
       _2d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."2d" | if( .x >= 0 and .y >= 0 ) then [ .x, .y ] | join(", ") else "" end' )
       _3d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."3d" | if( .x >= 0 and .y >= 0 and .z >= 0 ) then [ .x, .y, .z ] | join(", ") else "" end' )
       _active_checks_enabled=$(         ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.active | if( . == null ) then "" else . end' )
