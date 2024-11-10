@@ -116,7 +116,7 @@
       _low_flap_threshold=$(            ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.low | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _freshness_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.freshness.threshold | if( . == null ) then "" else . end' )
       _host_name=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
-      _hostgroups=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ ops.0.hostgroups[]     | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
+      _hostgroups=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].hostgroups[]     | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
       _icon_image=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.file.image | if( . == null ) then "" else . end' )
       _icon_image_alt=$(                ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.file.alternate | if( . == null ) then "" else . end' )
       _initial_state=$(                 ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].initial_state | if( . == null ) then "" else . end' )
@@ -140,7 +140,7 @@
       _vrml_image=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.image.vrml | if( . == null ) then "" else . end' )
       _use=$(                           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].use | if( . == null ) then "" else . end' )
       
-      _iac_json=$(                      ${cmd_echo} ${host}  | ${cmd_jq} -r  '.iac | if( .[] > 0 ) then .0 end' )
+      #_iac_json=$(                      ${cmd_echo} ${host}  | ${cmd_jq} -r  '.iac | if( .[] | length > 0 ) then .0 else "{}" end' )
 
 
       ${cmd_echo} Writing Host: ${_path}/${_file_name}.cfg
