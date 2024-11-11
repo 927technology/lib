@@ -51,15 +51,15 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
     for command in $( ${cmd_echo} "${_json}" | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
-      _file_name=$( ${cmd_echo} "${command}"| ${cmd_jq} -r '.name.string' )
-      _line=$( ${cmd_echo} "${command}"| ${cmd_jq} -r '.line' )
-      _name=$( ${cmd_echo} "${command}"| ${cmd_jq} -r '.name.string' )
+      _file_name=$(                     ${cmd_echo} "${command}"  | ${cmd_jq} -r '.ops[0].name.string' )
+      _line=$(                          ${cmd_echo} "${command}"  | ${cmd_jq} -r '.ops[0].line' )
+      _name=$(                          ${cmd_echo} "${command}"  | ${cmd_jq} -r '.ops[0].name.string' )
 
       ${cmd_echo} Writing Command: ${_path}/${_file_name}.cfg
       ${cmd_cat} << EOF.command > ${_path}/${_file_name}.cfg
 define command                      {
-$( [[ ! -z ${_line} ]]        && ${cmd_printf} '%-1s %-32s %-50s' "" command_line "${_line}" )
-$( [[ ! -z ${_name} ]]        && ${cmd_printf} '%-1s %-32s %-50s' "" command_name "${_name}" )
+$( [[ ! -z ${_line} ]]                          && ${cmd_printf} '%-1s %-32s %-50s' "" command_line "${_line}" )
+$( [[ ! -z ${_name} ]]                          && ${cmd_printf} '%-1s %-32s %-50s' "" command_name "${_name}" )
 }
 EOF.command
 

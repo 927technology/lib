@@ -66,17 +66,17 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
     for serviceescalation in $( ${cmd_echo} "${_json}" | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
-      _contacts=$(              ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .contacts[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _contact_groups=$(        ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .contactgroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _escalation_options=$(    ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .escalation.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _escalation_period=$(     ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '.escalation.timeperiod.string | select( .escalation.timeperiod.enable == true )' )
-      _file_name=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.name.string' )
-      _first_notification=$(    ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.first_notification' )
-      _host_name=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.name.string' )
-      _hostgroup_name=$(        ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .hostgroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _last_notification=$(     ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.last_notificaton' )
-      _notification_interval=$( ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.notification_interval' )
-      _service_description=$(   ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.service_description' )
+      _contacts=$(              ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '[ .ops[0].contacts[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
+      _contact_groups=$(        ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '[ .ops[0].contactgroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
+      _escalation_options=$(    ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '[ .ops[0].escalation.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( . | length < 1 ) then "" else join(", ") end' )
+      _escalation_period=$(     ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].escalation.timeperiod.string | select( .escalation.timeperiod.enable == true )' )
+      _file_name=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].name.string' )
+      _first_notification=$(    ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].first_notification' )
+      _host_name=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].name.string' )
+      _hostgroup_name=$(        ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '[ .ops[0].hostgroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
+      _last_notification=$(     ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].last_notificaton' )
+      _notification_interval=$( ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].notification_interval' )
+      _service_description=$(   ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].service_description' )
 
 
       ${cmd_echo} Writing Service Dependancy: ${_path}/${_file_name}.cfg

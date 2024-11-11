@@ -44,9 +44,10 @@
   local _flap_detection_options=
   local _freshness_threshold=
   local _high_flap_threshold=
+  local _host_json=
   local _host_name=
   local _hostgroups=
-  local _iac_json="{}"
+  local _iac_json=
   local _icon_image=
   local _icon_image_alt=
   local _initial_state=
@@ -88,12 +89,11 @@
     shift
   done
 
-
   ## main
   if [[ ! -z ${_json} ]] && [[ $( ${cmd_echo} ${_json} | ${cmd_jq} '. | length' ) > 0 ]]; then
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
     
-    for host in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '. | select(.enable == true)' ); do 
+    for host in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
       _2d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."2d" | if( .x >= 0 and .y >= 0 ) then [ .x, .y ] | join(", ") else "" end' )
       _3d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."3d" | if( .x >= 0 and .y >= 0 and .z >= 0 ) then [ .x, .y, .z ] | join(", ") else "" end' )
       _active_checks_enabled=$(         ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.active | if( . == null ) then "" else . end' )
@@ -113,10 +113,12 @@
       _flap_detection_enabled=$(        ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.enable | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
       _flap_detection_options=$(        ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].flap_detection.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
       _high_flap_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.high | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
+      _host_json=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -c  '.ops[0]' )
       _low_flap_threshold=$(            ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.low | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _freshness_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.freshness.threshold | if( . == null ) then "" else . end' )
       _host_name=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
       _hostgroups=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].hostgroups[]     | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
+      _iac_json=$(                      ${cmd_echo} ${host}  | ${cmd_jq} -c  '.iac | if(length > 0) then .[0] else "{}" end' )
       _icon_image=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.file.image | if( . == null ) then "" else . end' )
       _icon_image_alt=$(                ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.file.alternate | if( . == null ) then "" else . end' )
       _initial_state=$(                 ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].initial_state | if( . == null ) then "" else . end' )
@@ -139,9 +141,7 @@
       _statusmap_image=$(               ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.file.statusmap | if( . == null ) then "" else . end' )
       _vrml_image=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.image.vrml | if( . == null ) then "" else . end' )
       _use=$(                           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].use | if( . == null ) then "" else . end' )
-      
-      #_iac_json=$(                      ${cmd_echo} ${host}  | ${cmd_jq} -r  '.iac | if( .[] | length > 0 ) then .0 else "{}" end' )
-
+    
 
       ${cmd_echo} Writing Host: ${_path}/${_file_name}.cfg
       ${cmd_cat} << EOF.host > ${_path}/${_file_name}.cfg
@@ -192,12 +192,26 @@ $( [[ ! -z ${_stalking_options} ]]              && ${cmd_printf} '%-1s %-32s %-5
 $( [[ ! -z ${_statusmap_image} ]]               && ${cmd_printf} '%-1s %-32s %-50s' "" statusmap_image "${_statusmap_image}" )
 $( [[ ! -z ${_vrml_image} ]]                    && ${cmd_printf} '%-1s %-32s %-50s' "" vrml_image "${_vrml_image}" )
 $( [[ ! -z ${_use} ]]                           && ${cmd_printf} '%-1s %-32s %-50s' "" use "${_use}" )
-$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _iac "${_iac_json}" )
+
+$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _host  \'"${_host_json}"\' )
+$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _iac   \'"${_iac_json}"\' )
 }
 EOF.host
 
       [[ ${?} != ${exit_ok} ]] && (( _error_count++ ))
-      ${cmd_sed} -i '/^[[:space:]]*$/d' ${_path}/${_file_name}.cfg
+      ${cmd_sed} -i '/^[[ons_enabled            1                                                 
+  process_perf_data                true                                              
+  register                         1                                                 
+  retain_nonstatus_information     true                                              
+  retain_status_information        true                                              
+  retry_interval                   1                                                 
+  stalking_options                 d, o, u                                           
+  use                              cloud-infrastructure                              
+  _iac                             "{"note":"/covid-19-apex","depth":1,"description":"apex compartment","enable":true,"enable_delete":false,"name":"covid-19-apex","label":"covid-19-apex","parent":{"label":"root","foreign":{"enable":false,"et":null,"flock":null,"phase":null,"project":null}},"prefix":[],"suffix":[],"tags":{"defined":{},"freeform":{}},"telemetry_alarms":[]}"
+}
+[root@ops-ms /]# 
+
+:space:]]*$/d' ${_path}/${_file_name}.cfg
     done 
 
     if [[ ${_error_count} > 0 ]]; then

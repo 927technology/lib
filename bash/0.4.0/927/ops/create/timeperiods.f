@@ -57,11 +57,11 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
     for timeperiod in $(                ${cmd_echo} ${_json}      | ${cmd_jq} -c  '.[] | select( .enable == true )' ); do 
-      _alias=$(                         ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.name.display | if( . == null ) then "" else . end' )
+      _alias=$(                         ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.ops[0].name.display | if( . == null ) then "" else . end' )
       #_excludes=
-      _file_name=$(                     ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.name.string | if( . == null ) then "" else . end' )
-      _ranges=$(                        ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '[ .ranges[] | select( .enable == true ) ]' )
-      _timeperiod_name=$(               ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.name.string | if( . == null ) then "" else . end' )
+      _file_name=$(                     ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
+      _ranges=$(                        ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '[ .ops[0].ranges[] | select( .enable == true ) ]' )
+      _timeperiod_name=$(               ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
 
 
       # write file

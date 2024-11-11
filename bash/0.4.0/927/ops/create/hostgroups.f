@@ -58,7 +58,7 @@
   if [[ ! -z ${_json} ]] && [[ $( ${cmd_echo} ${_json} | ${cmd_jq} '. | length' ) > 0 ]]; then
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
-    for hostgroup in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '. | select(.enable == true)' ); do 
+    for hostgroup in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
       _alias=$(                         ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].name.display | if( . == null ) then "" else . end' )
       _file_name=$(                     ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].name.string' )
       _hostgroup_name=$(                ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
