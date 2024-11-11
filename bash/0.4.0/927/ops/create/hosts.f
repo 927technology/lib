@@ -44,6 +44,7 @@
   local _flap_detection_options=
   local _freshness_threshold=
   local _high_flap_threshold=
+  local _host_json=
   local _host_name=
   local _hostgroups=
   local _iac_json=
@@ -114,6 +115,7 @@
       _high_flap_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.high | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _low_flap_threshold=$(            ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.low | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _freshness_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.freshness.threshold | if( . == null ) then "" else . end' )
+      _host_json=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -c  '.ops[0]' )
       _host_name=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
       _hostgroups=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].hostgroups[]     | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
       _iac_json=$(                      ${cmd_echo} ${host}  | ${cmd_jq} -c  '.iac | if(length > 0) then .[0] else "{}" end' )
@@ -190,7 +192,7 @@ $( [[ ! -z ${_statusmap_image} ]]               && ${cmd_printf} '%-1s %-32s %-5
 $( [[ ! -z ${_vrml_image} ]]                    && ${cmd_printf} '%-1s %-32s %-50s' "" vrml_image "${_vrml_image}" )
 $( [[ ! -z ${_use} ]]                           && ${cmd_printf} '%-1s %-32s %-50s' "" use "${_use}" )
 
-$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _host  \'"${host}"\' )
+$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _host  \'"${_host_json}"\' )
 $(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _iac   \'"${_iac_json}"\' )
 }
 EOF.host
