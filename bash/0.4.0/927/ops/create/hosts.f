@@ -44,7 +44,6 @@
   local _flap_detection_options=
   local _freshness_threshold=
   local _high_flap_threshold=
-  local _host_json=
   local _host_name=
   local _hostgroups=
   local _iac_json=
@@ -60,6 +59,7 @@
   local _notification_period=
   local _notifications_enabled=
   local _obsess_over_host=
+  local _ops_json=
   local _parents=
   local _passive_checks_enabled=
   local _process_perf_data=
@@ -115,7 +115,6 @@
       _high_flap_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.high | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _low_flap_threshold=$(            ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.low | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _freshness_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.freshness.threshold | if( . == null ) then "" else . end' )
-      _host_json=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -c  '.ops[0]' )
       _host_name=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
       _hostgroups=$(                    ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].hostgroups[]     | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
       _iac_json=$(                      ${cmd_echo} ${host}  | ${cmd_jq} -c  '.iac | if(length > 0) then .[0] else "{}" end' )
@@ -126,6 +125,7 @@
       _notes=$(                         ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].notes.string | if( . == null ) then "" else . end' )
       _notes_url=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].notes.url | if( . == null ) then "" else . end' )
       _notifications_enabled=$(         ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].notification.enable | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
+      _ops_json=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -c  '.ops[0]' )
       _first_notification_delay=$(      ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].notification.first_delay | if( '${_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _notification_interval=$(         ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].notification.interval | if( '${_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _notification_options=$(          ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].notification.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( '${_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
@@ -192,7 +192,7 @@ $( [[ ! -z ${_statusmap_image} ]]               && ${cmd_printf} '%-1s %-32s %-5
 $( [[ ! -z ${_vrml_image} ]]                    && ${cmd_printf} '%-1s %-32s %-50s' "" vrml_image "${_vrml_image}" )
 $( [[ ! -z ${_use} ]]                           && ${cmd_printf} '%-1s %-32s %-50s' "" use "${_use}" )
 
-$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _host  \'"${_host_json}"\' )
+$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _ops  \'"${_ops_json}"\' )
 $(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _iac   \'"${_iac_json}"\' )
 }
 EOF.host
