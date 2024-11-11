@@ -94,6 +94,7 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
     
     for host in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
+    echo $host
       _2d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."2d" | if( .x >= 0 and .y >= 0 ) then [ .x, .y ] | join(", ") else "" end' )
       _3d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."3d" | if( .x >= 0 and .y >= 0 and .z >= 0 ) then [ .x, .y, .z ] | join(", ") else "" end' )
       _active_checks_enabled=$(         ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.active | if( . == null ) then "" else . end' )
@@ -113,7 +114,7 @@
       _flap_detection_enabled=$(        ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.enable | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
       _flap_detection_options=$(        ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].flap_detection.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
       _high_flap_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.high | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
-      _host_json=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -c  '.ops[0]' )
+      #_host_json=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -c  '.ops[0]' )
       _low_flap_threshold=$(            ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.low | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _freshness_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.freshness.threshold | if( . == null ) then "" else . end' )
       _host_name=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
