@@ -192,8 +192,8 @@ $( [[ ! -z ${_statusmap_image} ]]               && ${cmd_printf} '%-1s %-32s %-5
 $( [[ ! -z ${_vrml_image} ]]                    && ${cmd_printf} '%-1s %-32s %-50s' "" vrml_image "${_vrml_image}" )
 $( [[ ! -z ${_use} ]]                           && ${cmd_printf} '%-1s %-32s %-50s' "" use "${_use}" )
 
-$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _ops  \'"${_ops_json}"\' )
-$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _iac   \'"${_iac_json}"\' )
+$( [[ ${_template} == ${false} ]]               && ${cmd_printf} '%-1s %-32s %-50s' "" _ops  \'"${_ops_json}"\' )
+$( [[ ${_template} == ${false} ]]               && ${cmd_printf} '%-1s %-32s %-50s' "" _iac  \'"${_iac_json}"\' )
 }
 EOF.host
 
