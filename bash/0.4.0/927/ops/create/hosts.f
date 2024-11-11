@@ -93,7 +93,6 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
     
     for host in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
-    echo $host
       _2d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."2d" | if( .x >= 0 and .y >= 0 ) then [ .x, .y ] | join(", ") else "" end' )
       _3d_coords=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].icon.coordinates."3d" | if( .x >= 0 and .y >= 0 and .z >= 0 ) then [ .x, .y, .z ] | join(", ") else "" end' )
       _active_checks_enabled=$(         ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.active | if( . == null ) then "" else . end' )
