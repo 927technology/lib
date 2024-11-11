@@ -145,6 +145,7 @@
 
       ${cmd_echo} Writing Host: ${_path}/${_file_name}.cfg
       ${cmd_cat} << EOF.host > ${_path}/${_file_name}.cfg
+define host                    {
 $( [[ ! -z ${_2d_coords} ]]                     && ${cmd_printf} '%-1s %-32s %-50s' "" 2d_coords "${_2d_coords}" )
 $( [[ ! -z ${_3d_coords} ]]                     && ${cmd_printf} '%-1s %-32s %-50s' "" 3d_coords "${_3d_coords}" )
 $( [[ ! -z ${_active_checks_enabled} ]]         && ${cmd_printf} '%-1s %-32s %-50s' "" active_checks_enabled "${_active_checks_enabled}" )
