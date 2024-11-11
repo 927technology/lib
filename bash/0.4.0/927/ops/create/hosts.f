@@ -44,7 +44,6 @@
   local _flap_detection_options=
   local _freshness_threshold=
   local _high_flap_threshold=
-  local _host_json=
   local _host_name=
   local _hostgroups=
   local _iac_json=
@@ -114,7 +113,6 @@
       _flap_detection_enabled=$(        ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.enable | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
       _flap_detection_options=$(        ${cmd_echo} ${host}  | ${cmd_jq} -r  '[ .ops[0].flap_detection.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
       _high_flap_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.high | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
-      #_host_json=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -c  '.ops[0]' )
       _low_flap_threshold=$(            ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].flap_detection.threshold.low | if( '${_flap_detection_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       _freshness_threshold=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].check.freshness.threshold | if( . == null ) then "" else . end' )
       _host_name=$(                     ${cmd_echo} ${host}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
@@ -146,7 +144,6 @@
 
       ${cmd_echo} Writing Host: ${_path}/${_file_name}.cfg
       ${cmd_cat} << EOF.host > ${_path}/${_file_name}.cfg
-define host                        {
 $( [[ ! -z ${_2d_coords} ]]                     && ${cmd_printf} '%-1s %-32s %-50s' "" 2d_coords "${_2d_coords}" )
 $( [[ ! -z ${_3d_coords} ]]                     && ${cmd_printf} '%-1s %-32s %-50s' "" 3d_coords "${_3d_coords}" )
 $( [[ ! -z ${_active_checks_enabled} ]]         && ${cmd_printf} '%-1s %-32s %-50s' "" active_checks_enabled "${_active_checks_enabled}" )
@@ -194,25 +191,13 @@ $( [[ ! -z ${_statusmap_image} ]]               && ${cmd_printf} '%-1s %-32s %-5
 $( [[ ! -z ${_vrml_image} ]]                    && ${cmd_printf} '%-1s %-32s %-50s' "" vrml_image "${_vrml_image}" )
 $( [[ ! -z ${_use} ]]                           && ${cmd_printf} '%-1s %-32s %-50s' "" use "${_use}" )
 
-$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _host  \'"${_host_json}"\' )
+$(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _host  \'"${host}"\' )
 $(                                                 ${cmd_printf} '%-1s %-32s %-50s' "" _iac   \'"${_iac_json}"\' )
 }
 EOF.host
 
       [[ ${?} != ${exit_ok} ]] && (( _error_count++ ))
-      ${cmd_sed} -i '/^[[ons_enabled            1                                                 
-  process_perf_data                true                                              
-  register                         1                                                 
-  retain_nonstatus_information     true                                              
-  retain_status_information        true                                              
-  retry_interval                   1                                                 
-  stalking_options                 d, o, u                                           
-  use                              cloud-infrastructure                              
-  _iac                             "{"note":"/covid-19-apex","depth":1,"description":"apex compartment","enable":true,"enable_delete":false,"name":"covid-19-apex","label":"covid-19-apex","parent":{"label":"root","foreign":{"enable":false,"et":null,"flock":null,"phase":null,"project":null}},"prefix":[],"suffix":[],"tags":{"defined":{},"freeform":{}},"telemetry_alarms":[]}"
-}
-[root@ops-ms /]# 
-
-:space:]]*$/d' ${_path}/${_file_name}.cfg
+      ${cmd_sed} -i '/^[[:space:]]*$/d' ${_path}/${_file_name}.cfg
     done 
 
     if [[ ${_error_count} > 0 ]]; then
