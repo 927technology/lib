@@ -68,24 +68,42 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
     for contact in $(                   ${cmd_echo} ${_json}    | ${cmd_jq} -c  '.[] | select( .enable == true )' ); do 
-      _alias=$(                         ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].name.display | if( . == null ) then "" else . end' )
-      _can_submit_commands=$(           ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].can_submit_commands | if( . == null ) then "" else . end' )
-      _contact_groups=$(                ${cmd_echo} ${contact}  | ${cmd_jq} -r  '[ .ops[0].contact_groups[] | select( .enable == true ) ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _email=$(                         ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].name.email | if( . == null ) then "" else . end' )
-      _file_name=$(                     ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
-      _host_notifications_enabled=$(    ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].notification.host.enable | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
-      _host_notification_commands=$(    ${cmd_echo} ${contact}  | ${cmd_jq} -r  '[ .ops[0].notification.host.commands[] | select(.enable == true).name ] | if( '${_host_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
-      _host_notification_options=$(     ${cmd_echo} ${contact}  | ${cmd_jq} -r  '[ .ops[0].notification.host.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( '${_host_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
-      _host_notification_period=$(      ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].notification.host.period | if( '${_host_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
-      _name=$(                          ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
-      _pager=$(                         ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].name.pager | if( . == null ) then "" else . end' )
-      _retain_status_information=$(     ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].retain.status | if( . == null ) then "" else . end' )
-      _retain_nonstatus_information=$(  ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].retain.nonstatus | if( . == null ) then "" else . end' )
-      _service_notifications_enabled=$( ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].notification.service.enable | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
-      _service_notification_commands=$( ${cmd_echo} ${contact}  | ${cmd_jq} -r  '[ .ops[0].notification.service.commands[] | select(.enable == true).name ] | if( '${_service_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
-      _service_notification_options=$(  ${cmd_echo} ${contact}  | ${cmd_jq} -r  '[ .ops[0].notification.service.options | to_entries[] | select(.value == true) | .key[0:1] ] | if( '${_service_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
-      _service_notification_period=$(   ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].notification.service.period | if( '${_service_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
-      _use=$(                           ${cmd_echo} ${contact}  | ${cmd_jq} -r  '.ops[0].use | if( . == null ) then "" else . end' )
+
+      _alias=$(                         ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].name.display )                    | if( . == null ) then "" else . end' )
+      
+      _can_submit_commands=$(           ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].can_submit_commands )             | if( . == null ) then "" else . end' )
+      
+      _contact_groups=$(                ${cmd_echo} ${contact}  | ${cmd_jq}     'try( .ops[0].contact_groups[] )                | select( .enable == true )' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _email=$(                         ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].name.email )                      | if( . == null ) then "" else . end' )
+      
+      _file_name=$(                     ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].name.string )                     | if( . == null ) then "" else . end' )
+      
+      _host_notifications_enabled=$(    ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].notification.host.enable )        | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
+      
+      _host_notification_commands=$(    ${cmd_echo} ${contact}  | ${cmd_jq}     'try( .ops[0].notification.host.commands[] )    | select(.enable == true).name' | ${cmd_jq} -sr '. | if( '${_host_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
+      
+      _host_notification_options=$(     ${cmd_echo} ${contact}  | ${cmd_jq}     'try( .ops[0].notification.host.options )       | to_entries[] | select(.value == true) | .key[0:1]' | ${cmd_jq} -sr '. | if( '${_host_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
+      
+      _host_notification_period=$(      ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].notification.host.period )        | if( '${_host_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
+      
+      _name=$(                          ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].name.string )                     | if( . == null ) then "" else . end' )
+
+      _pager=$(                         ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].name.pager )                      | if( . == null ) then "" else . end' )
+      
+      _retain_status_information=$(     ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].retain.status )                   | if( . == null ) then "" else . end' )
+      
+      _retain_nonstatus_information=$(  ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].retain.nonstatus )                | if( . == null ) then "" else . end' )
+      
+      _service_notifications_enabled=$( ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].notification.service.enable )     | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
+      
+      _service_notification_commands=$( ${cmd_echo} ${contact}  | ${cmd_jq}     'try( .ops[0].notification.service.commands[] ) | select(.enable == true).name' | ${cmd_jq} -sr '. | if( '${_service_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
+      
+      _service_notification_options=$(  ${cmd_echo} ${contact}  | ${cmd_jq}     'try( .ops[0].notification.service.options )    | to_entries[] | select(.value == true) | .key[0:1]' | ${cmd_jq} -sr '. | if( '${_service_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
+      
+      _service_notification_period=$(   ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].notification.service.period)      | if( '${_service_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
+      
+      _use=$(                           ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].use )                             | if( . == null ) then "" else . end' )
       
 
       # write file

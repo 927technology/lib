@@ -56,12 +56,16 @@
   if [[ ! -z ${_json} ]] && [[ $( ${cmd_echo} ${_json} | ${cmd_jq} '. | length' ) > 0 ]]; then
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
-    for timeperiod in $(                ${cmd_echo} ${_json}      | ${cmd_jq} -c  '.[] | select( .enable == true )' ); do 
-      _alias=$(                         ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.ops[0].name.display | if( . == null ) then "" else . end' )
+    for timeperiod in $(                ${cmd_echo} ${_json}      | ${cmd_jq} -c  'try( .[] )                                   | select( .enable == true )' ); do 
+      _alias=$(                         ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  'try( .ops[0].name.display )                  | if( . == null ) then "" else . end' )
+      
       #_excludes=
-      _file_name=$(                     ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
-      _ranges=$(                        ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '[ .ops[0].ranges[] | select( .enable == true ) ]' )
-      _timeperiod_name=$(               ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
+      
+      _file_name=$(                     ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  'try( .ops[0].name.string )                   | if( . == null ) then "" else . end' )
+      
+      _ranges=$(                        ${cmd_echo} ${timeperiod} | ${cmd_jq}     'try( .ops[0].ranges[] )                      | select( .enable == true )' | ${cmd_jq} -sr )
+      
+      _timeperiod_name=$(               ${cmd_echo} ${timeperiod} | ${cmd_jq} -r  'try( .ops[0].name.string )                   | if( . == null ) then "" else . end' )
 
 
       # write file

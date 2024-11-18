@@ -58,13 +58,19 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
     for hostgroup in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
 
-      _alias=$(                         ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].name.display | if( . == null ) then "" else . end' )
-      _file_name=$(                     ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
-      _members=$(                       ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '[ .ops[0].members[]     | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _notes=$(                         ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].notes.string | if( . == null ) then "" else . end' )
-      _notes_url=$(                     ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].notes_url | if( . == null ) then "" else . end' )
-      _servicegroup_members=$(          ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '[ .ops[0].servicegroups[] | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _servicegroup_name=$(             ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
+      _alias=$(                         ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  'try( .ops[0].name.display )                  | if( . == null ) then "" else . end' )
+      
+      _file_name=$(                     ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  'try( .ops[0].name.string )                   | if( . == null ) then "" else . end' )
+      
+      _members=$(                       ${cmd_echo} ${hostgroup}  | ${cmd_jq}     'try( .ops[0].members[] )                     | select( .enable == true ).name' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _notes=$(                         ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  'try( .ops[0].notes.string )                  | if( . == null ) then "" else . end' )
+      
+      _notes_url=$(                     ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  'try( .ops[0].notes_url )                     | if( . == null ) then "" else . end' )
+      
+      _servicegroup_members=$(          ${cmd_echo} ${hostgroup}  | ${cmd_jq}     'try( .ops[0].servicegroups[] )               | select( .enable == true ).name' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _servicegroup_name=$(             ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  'try( .ops[0].name.string )                   | if( . == null ) then "" else . end' )
 
 
       ${cmd_echo} Writing Host Group: ${_path}/${_file_name}.cfg

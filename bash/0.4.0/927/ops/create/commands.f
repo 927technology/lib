@@ -51,9 +51,12 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
     for command in $( ${cmd_echo} "${_json}" | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
-      _file_name=$(                     ${cmd_echo} "${command}"  | ${cmd_jq} -r '.ops[0].name.string' )
-      _line=$(                          ${cmd_echo} "${command}"  | ${cmd_jq} -r '.ops[0].line' )
-      _name=$(                          ${cmd_echo} "${command}"  | ${cmd_jq} -r '.ops[0].name.string' )
+    
+      _file_name=$(                     ${cmd_echo} "${command}"  | ${cmd_jq} -r 'try( .ops[0].name.string )' )
+      
+      _line=$(                          ${cmd_echo} "${command}"  | ${cmd_jq} -r 'try( .ops[0].line )' )
+  
+      _name=$(                          ${cmd_echo} "${command}"  | ${cmd_jq} -r 'try( .ops[0].name.string )' )
 
       ${cmd_echo} Writing Command: ${_path}/${_file_name}.cfg
       ${cmd_cat} << EOF.command > ${_path}/${_file_name}.cfg

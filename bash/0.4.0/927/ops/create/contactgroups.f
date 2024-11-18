@@ -53,11 +53,16 @@
   if [[ ! -z ${_json} ]] && [[ $( ${cmd_echo} ${_json} | ${cmd_jq} '. | length' ) > 0 ]]; then
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
     for contactgroup in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
-      _alias=$(                         ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  '.ops[0].name.display | if( . == null ) then "" else . end' )
-      _file_name=$(                     ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
-      _contactgroup_members=$(          ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  '[ .ops[0].members[] | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _contactgroup_name=$(             ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  '.ops[0].name.string | if( . == null ) then "" else . end' )
-      _members=$(                       ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  '[ .ops[0].members[] | select( .enable == true ).name ] | if( . | length < 1 ) then "" else join(", ") end' )
+    
+      _alias=$(                         ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  'try( .ops[0].name.display )               | if( . == null ) then "" else . end' )
+      
+      _file_name=$(                     ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  'try( .ops[0].name.string )                | if( . == null ) then "" else . end' )
+      
+      _contactgroup_members=$(          ${cmd_echo} ${contactgroup}  | ${cmd_jq}     'try( .ops[0].members[] )                  | select( .enable == true ).name' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _contactgroup_name=$(             ${cmd_echo} ${contactgroup}  | ${cmd_jq} -r  'try( .ops[0].name.string )                | if( . == null ) then "" else . end' )
+      
+      _members=$(                       ${cmd_echo} ${contactgroup}  | ${cmd_jq}     'try( .ops[0].members[] )                  | select( .enable == true ).name' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
 
       ${cmd_echo} Writing Contact Group: ${_path}/${_file_name}.cfg
       ${cmd_cat} << EOF.contactgroup > ${_path}/${_file_name}.cfg

@@ -64,19 +64,32 @@
     [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
     for servicedependancy in $( ${cmd_echo} "${_json}" | ${cmd_jq} -c '.[] | select(.enable == true)' ); do 
-      _dependency_period=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '.ops[0].dependant.timeperiod.string | select( .dependant.timeperiod.enable == true )' )
-      _dependent_host_name=$(           ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].dependant.hosts[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _dependent_hostgroup_name=$(      ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].dependant.hostgroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _dependent_servicegroup_name=$(   ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].dependant.servicegroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
+
+      _dependency_period=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  'try( .ops[0].dependant.timeperiod.string )  | select( .dependant.timeperiod.enable == true )' )
+      
+      _dependent_host_name=$(           ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].dependant.hosts[]       | select( .enable == true ).string' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _dependent_hostgroup_name=$(      ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].dependant.hostgroups[]  | select( .enable == true ).string' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _dependent_servicegroup_name=$(   ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].dependant.servicegroups[] | select( .enable == true ).string' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
       # _dependent_service_description=
-      _execution_failure_criteria=$(    ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].criteria | to_entries[] | select(.value == true) | .key[0:1] ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _file_name=$(                     ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].name.string' )
-      _host_name=$(                     ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].hosts[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _hostgroup_name=$(                ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].hostgroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _inherits_parent=$(               ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r '.ops[0].inherits_parent| if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
-      _notification_failure_criteria=$( ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].notification_failure_criteria | to_entries[] | select(.value == true) | .key[0:1] ] | if( . | length < 1 ) then "" else join(", ") end' )
-      _service_description=$(           ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '.ops[0].service.string' )
-      _servicegroup_name=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  '[ .ops[0].servicegroups[] | select( .enable == true ).string ] | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _execution_failure_criteria=$(    ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].criteria                | to_entries[] | select(.value == true) | .key[0:1]' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _file_name=$(                     ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  'try( .ops[0].name.string )' )
+      
+      _host_name=$(                     ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].hosts[]                 | select( .enable == true ).string' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _hostgroup_name=$(                ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].hostgroups[]            | select( .enable == true ).string' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _inherits_parent=$(               ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  'try( .ops[0].inherits_parent )       | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
+      
+      _notification_failure_criteria=$( ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].notification_failure_criteria | to_entries[] | select(.value == true) | .key[0:1]' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
+      
+      _service_description=$(           ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r  'try( .ops[0].service.string' )
+      
+      _servicegroup_name=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].servicegroups[]         | select( .enable == true ).string' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
 
 
       ${cmd_echo} Writing Service Dependancy: ${_path}/${_file_name}.cfg
