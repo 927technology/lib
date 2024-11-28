@@ -73,10 +73,10 @@
 
     _json_configuration=$( ${cmd_echo} ${_json_livestatus} | ${cmd_jq} -c 'try.configuration.'${_exit_resource} )
 
-    [[ -z ${_json_configuration} == null ]] && _json_configuration="[]"
+    #[[ -z ${_json_configuration} == null ]] && _json_configuration="[]"
 
     _json_status=$( ${cmd_echo} ${_json_livestatus} | ${cmd_jq} -c '.status' )
-    [[ ${?} == ${exit_ok} ]] || (( _error_count++ ))
+    #[[ ${?} == ${exit_ok} ]] || (( _error_count++ ))
 
     [[ ${_error_count} == 0 ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 

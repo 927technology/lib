@@ -139,7 +139,7 @@
       _stalking_options=
       _use=
 
-      _action_url=$(                      ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].is_volatile )                     | if( . == null ) then "" else . end' )
+      _action_url=$(                      ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].action_url )                      | if( . == null ) then "" else . end' )
 
       _active_checks_enabled=$(           ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.active )                    | if( . == null ) then "" else . end' )
       
@@ -226,7 +226,7 @@
       
       _icon_image_alt=$(                  ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].icon.file.alternate )             | if( . == null ) then "" else . end' )
       
-      _is_volatile=$(                     ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].is_volatile )                     | if( . == null ) then "" else . end' )
+      _is_volatile=$(                     ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].is_volatile )                     | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
       
       _display_name=$(                    ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].name.alias )                      | if( . == null ) then "" else . end' )
       
