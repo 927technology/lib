@@ -71,7 +71,7 @@
 
       _alias=$(                         ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].name.display )                    | if( . == null ) then "" else . end' )
       
-      _can_submit_commands=$(           ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].can_submit_commands )             | if( . == null ) then "" else . end' )
+      _can_submit_commands=$(           ${cmd_echo} ${contact}  | ${cmd_jq} -r  'try( .ops[0].can_submit_commands )             | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
       
       _contact_groups=$(                ${cmd_echo} ${contact}  | ${cmd_jq}     'try( .ops[0].contact_groups[] )                | select( .enable == true )' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
       
