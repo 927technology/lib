@@ -161,7 +161,7 @@
       
       _passive_checks_enabled=$(          ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.passive )                   | if( . == null ) then "" else . end' )
       
-      _process_perf_data=$(               ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.perfdata )                  | if( . == null ) then "" else . end' )
+      _process_perf_data=$(               ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.perfdata )                  | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
       
       _check_period=$(                    ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.period )                    | if( . == null ) then "" else . end' )
       
