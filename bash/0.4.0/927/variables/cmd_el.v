@@ -17,4 +17,5 @@ cmd_printf=/bin/printf
 cmd_rm=/bin/rm
 cmd_sed=/bin/sed
 cmd_sha256sum=/bin/sha256sum
+cmd_tail=/usr/bin/tail
 cmd_unixcat=/bin/unixcat
