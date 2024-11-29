@@ -7,6 +7,7 @@ cmd_chmod=/bin/chmod
 cmd_curl=/bin/curl
 cmd_date=/bin/date
 cmd_echo=/bin/echo
+cmd_head=/usr/bin/head
 cmd_jq=/bin/jq
 cmd_kill=/bin/kill
 cmd_mkdir=/bin/mkdir
