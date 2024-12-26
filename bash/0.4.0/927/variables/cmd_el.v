@@ -4,6 +4,7 @@ cmd_awk=/bin/awk
 cmd_cat=/bin/cat
 cmd_chown=/bin/chown
 cmd_chmod=/bin/chmod
+cmd_cp=/bin/cp
 cmd_curl=/bin/curl
 cmd_date=/bin/date
 cmd_echo=/bin/echo
