@@ -20,5 +20,6 @@ cmd_rm=/bin/rm
 cmd_sed=/bin/sed
 cmd_sha256sum=/bin/sha256sum
 cmd_tail=/usr/bin/tail
+cmd_tar=/usr/bin/tar
 cmd_unixcat=/bin/unixcat
 cmd_useradd=/usr/sbin/useradd
