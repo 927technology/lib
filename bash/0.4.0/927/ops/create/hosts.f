@@ -12,6 +12,7 @@
   # date/epoch.f
   # date/pretty.f
   # json/validate.f
+  # json/timestamp.f
 
   # argument variables
   local _json=
@@ -25,8 +26,7 @@
   local _exit_string=
 
   # date variables
-  local _date_epoch=$( date.epoch )
-  local _date_pretty=$( date.pretty )
+  local _json_timestamp=$( json.timestamp )
 
   # host variables
   local _2d_coords=
@@ -235,11 +235,20 @@
       _host_name=$(                       ${cmd_echo} ${host}  | ${cmd_jq} -r  'try( .ops[0].name.string )                | if( . == null ) then "" else . end' )
       
       _hostgroups=$(                      ${cmd_echo} ${host}  | ${cmd_jq}     'try( .ops[0].hostgroups[] )               | select( .enable == true ).name' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
-      
 
-      _iac_json=$(                        ${cmd_echo} ${_iac_json} | ${cmd_jq}    '.configuration         |=.+  '$( ${cmd_echo} ${host}  | ${cmd_jq} -c  'try( .iac ) | if(length > 0) then .[0] else [] end' ) )
-      _iac_json=$(                        ${cmd_echo} ${_iac_json} | ${cmd_jq}    '.status.date.epoch     |=.+ '${_date_epoch} )
-      _iac_json=$(                        ${cmd_echo} ${_iac_json} | ${cmd_jq} -c '.status.date.pretty    |=.+ "'"${_date_pretty}"'"' )
+
+
+
+
+
+
+
+      _iac_json=$(                        ${cmd_echo} ${_iac_json} | ${cmd_jq}    '.data[0].iac                           |=.+  '$( ${cmd_echo} ${host}  | ${cmd_jq} -c  'try.iac  | if(length > 0) then . else [] end' ) )
+      _iac_json=$(                        ${cmd_echo} ${_iac_json} | ${cmd_jq} -c '.                                      |=.+ '"${_json_timestamp}" )
+
+
+
+
 
 
 
@@ -258,7 +267,28 @@
       
       _notifications_enabled=$(           ${cmd_echo} ${host}  | ${cmd_jq} -r  'try( .ops[0].notification.enable )        | if( . == true ) then '${true}' else '${false}' end' )
       
-      _ops_json=$(                        ${cmd_echo} ${host}  | ${cmd_jq} -c  'try( .ops[0] )' )
+
+
+
+
+
+
+
+
+
+
+
+      _ops_json=$(                        ${cmd_echo} ${_ops_json}  | ${cmd_jq} -c  '.data[0].ops                         |=.+  '$( ${cmd_echo} ${host}  | ${cmd_jq} -c  'try.ops | if(length > 0) then . else [] end' ) )
+      _ops_json=$(                        ${cmd_echo} ${_ops_json}  | ${cmd_jq} -c  '.                                    |=.+ '"${_json_timestamp}" )
+
+
+
+
+
+
+
+
+
       
       _first_notification_delay=$(        ${cmd_echo} ${host}  | ${cmd_jq} -r  'if( 
                                                                                   try( .ops[0].notification.first_delay ) 

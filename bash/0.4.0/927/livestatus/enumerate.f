@@ -26,9 +26,9 @@
 
   # variables
   local _json="{}"
-  local _json_header="{}"
-  local _json_livestatus=
-  local _exit_resource=
+  local _json_resource=
+  local _output=
+  local _resource_name=
 
 
   # parse command arguments
@@ -58,25 +58,40 @@
 
     case ${_resource} in
       compartment | compartments )
-        _exit_cloud=oci
-        _exit_resource=compartments
+        _cloud_name=oci
+        _resource_name=compartments
       ;;
       drg | drgs )
-        _exit_cloud=oci
-        _exit_resource=drgs
+        _cloud_name=oci
+        _resource_name=drgs
+      ;;
+      iac )
+        _cloud_name=internal
+        _resource_name=iac
+      ;;
+      ops )
+        _cloud_name=internal
+        _resource_name=ops
       ;;
     esac
 
-    _json_livestatus=$( ${cmd_printf} "GET services\nColumns: plugin_output\nFilter: display_name = ${_service}\nFilter: host_name = ${_host}\n" | ${cmd_unixcat} /var/cache/naemon/live | ${cmd_jq} -c )
+
+    _output=$( ${cmd_printf} "GET services\nColumns: plugin_output\nFilter: display_name = ${_service}\nFilter: host_name = ${_host}\n" | ${cmd_unixcat} /var/cache/naemon/live | ${cmd_jq} -c )
     [[ ${?} == ${exit_ok} ]] || (( _error_count++ ))
 
 
-    _json_configuration=$( ${cmd_echo} ${_json_livestatus} | ${cmd_jq} -c 'try.configuration.'${_exit_resource} )
+    case ${_service} in
+      iac-config )
+        _json_resource=$( ${cmd_echo} "${_output}" | ${cmd_jq} '. | if( try.data[0].iac[0].'${_resource}' ) then .data[0].iac[0].'${_resource}' else [] end' )
+        #_json_resource=$( ${cmd_echo} ${_output} | ${cmd_jq} 'if(try.data[0].iac[0].'${_resource}') then .data[0].'${_resource}' else [] end' )
+ 
+      ;;
+      * )
+        _json_resource=$( ${cmd_echo} ${_output} | ${cmd_jq} 'if(try.data[0].'${_resource}') then .data[0].'${_resource}' else [] end' )
+      ;;
+    esac
 
-    #[[ -z ${_json_configuration} == null ]] && _json_configuration="[]"
-
-    _json_status=$( ${cmd_echo} ${_json_livestatus} | ${cmd_jq} -c '.status' )
-    #[[ ${?} == ${exit_ok} ]] || (( _error_count++ ))
+    _json_timestamp=$( ${cmd_echo} ${_output} | ${cmd_jq} -c 'try.date' )
 
     [[ ${_error_count} == 0 ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
@@ -84,17 +99,17 @@
 
   # write json
   ## configuration
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} '.configuration   |=.+ '"${_json_configuration}" )
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.data[0].'${_resource_name}'    |=.+ '"${_json_resource}" )
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.date                           |=.+ '"${_json_timestamp}" )
   
-  ## status
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} '.status          |=.+ '"${_json_status}" )
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} '.status.cloud    |=.+ "'"${_exit_cloud}"'"' )
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} '.status.type     |=.+ "'"${_exit_resource}"'"' )
+  # ## status
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.status.cloud                   |=.+ "'"${_cloud_name}"'"' )
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.status.type                    |=.+ "'"${_resource_name}"'"' )
 
   # output
   _exit_string=${_json}
 
-  ${cmd_echo} ${_exit_string} | ${cmd_jq} -c
+  ${cmd_echo} ${_exit_string}
   return ${_exit_code}
 
 }
