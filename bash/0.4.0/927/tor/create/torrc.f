@@ -1,4 +1,4 @@
-927.ops.create.torrc () {
+927.tor.create.torrc () {
   # description
   # creates torrc configuration
   # accepts 2 arguments -
@@ -45,7 +45,7 @@
 
   ## main
   if [[ ! -z ${_json} ]]; then
-    [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
+    [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path}
 
     _daemon=$(                                  ${cmd_echo} ${_json}  | ${cmd_jq} -r  'try( .daemon )                                   | if( . == '${true}' ) then '${true}' else '${false}' end' )
 
@@ -75,80 +75,51 @@
     ${cmd_echo} Writing Config: ${_path}/torrc
     ${cmd_cat} << EOF.torrc > ${_path}/torrc
 
-  $( [[ ! -z ${_socks_primary_port} ]]                                                                    \
-    && ${cmd_printf} "SocksPort ${_socks_port}" )
 
-  $( [[ ! -z ${_socks_secondary_address} ]] &&                                                            \
-     [[ ! -z ${_socks_secondary_port} ]]                                                                  \
-    && ${cmd_printf} "SocksPort ${_sockes_secondary_address}:${_socks_secondary_port}" )
 
-  $( ( [[ ! -z ${_socks_accept_subnet} ]] && [[ ! -z ${_socks_accept_prefix} ]] ) &&                      \
-       [[ ${_socks_accept_enable} == ${true} ]]                                                           \
-    && ${cmd_printf} "SocksPolicy accept ${_socks_accept_subnet}/${_socks_accept_prefix}" )
+# RunAsDaemon ${_daemon}
 
-  $( ( [[ ! -z ${_socks_reject_subnet} ]] && [[ ! -z ${_socks_reject_prefix} ]] ) &&                      \
-       [[ ${_socks_reject_enable} == ${true} ]]                                                           \
-    && ${cmd_printf} "SocksPolicy reject ${_socks_accept_subnet}/${_socks_accept_prefix}" )
+# DataDirectory /var/lib/tor
 
-  $( ( [[ ! -z ${_log_debug_file} ]] && [[ ! -z ${_log_debug_output} ]] ) &&                              \
-       [[ ${_log_debug_enable} == ${true} ]]                                                              \                       \
-    && ${cmd_printf} "Log debug file ${_log_debug_file}" )
+# #ControlPort 9051
 
-  $( ( [[ ! -z ${_log_debug_file} ]] && [[ ! -z ${_log_debug_output} ]] ) &&                              \
-       [[ ${_log_debug_enable} == ${true} ]]                                                              \                       \
-    && ${cmd_printf} "Log debug  ${_log_debug_output}" )
+# #HiddenServiceDir /var/lib/tor/hidden_service/
+# #HiddenServicePort 80 127.0.0.1:80
 
-  $( ( [[ ! -z ${_log_notices_file} ]] && [[ ! -z ${_log_notices_output} ]] ) &&                          \
-       [[ ${_log_notices_enable} == ${true} ]]                                                            \                       \
-    && ${cmd_printf} "Log notice file ${_log_notice_file}" )
+# HiddenServiceDir /var/lib/tor/secure
+# HiddenServicePort 8080 192.168.1.250:8080
 
-  $( ( [[ ! -z ${_log_notices_file} ]] && [[ ! -z ${_log_notices_output} ]] ) &&                          \
-       [[ ${_log_notices_enable} == ${true} ]]                                                            \                       \
-    && ${cmd_printf} "Log notice  ${_log_notice_output}" )
+# #ORPort 9001
 
-RunAsDaemon ${_daemon}
+# #Address noname.example.com
 
-DataDirectory /var/lib/tor
+# # OutboundBindAddress 10.0.0.5
 
-#ControlPort 9051
+# #Nickname ididnteditheconfig
 
-#HiddenServiceDir /var/lib/tor/hidden_service/
-#HiddenServicePort 80 127.0.0.1:80
+# #RelayBandwidthRate 100 KB  # Throttle traffic to 100KB/s (800Kbps)
+# #RelayBandwidthBurst 200 KB # But allow bursts up to 200KB/s (1600Kbps)
 
-HiddenServiceDir /var/lib/tor/secure
-HiddenServicePort 8080 192.168.1.250:8080
+# #AccountingMax 4 GB
+# #AccountingStart day 00:00
+# #AccountingStart month 3 15:00
 
-#ORPort 9001
+# #ContactInfo Random Person <nobody AT example dot com>
+# #ContactInfo 0xFFFFFFFF Random Person <nobody AT example dot com>
 
-#Address noname.example.com
+# #DirPort 9030 # what port to advertise for directory connections
+# #DirPort 80 NoListen
+# #DirPort 127.0.0.1:9091 NoAdvertise
+# #DirPortFrontPage /etc/tor/tor-exit-notice.html
 
-# OutboundBindAddress 10.0.0.5
+# #MyFamily $keyid,$keyid,...
 
-#Nickname ididnteditheconfig
+# #ExitPolicy accept *:6660-6667,reject *:* # allow irc ports but no more
+# #ExitPolicy accept *:119 # accept nntp as well as default exit policy
+# #ExitPolicy reject *:* # no exits allowed
 
-#RelayBandwidthRate 100 KB  # Throttle traffic to 100KB/s (800Kbps)
-#RelayBandwidthBurst 200 KB # But allow bursts up to 200KB/s (1600Kbps)
-
-#AccountingMax 4 GB
-#AccountingStart day 00:00
-#AccountingStart month 3 15:00
-
-#ContactInfo Random Person <nobody AT example dot com>
-#ContactInfo 0xFFFFFFFF Random Person <nobody AT example dot com>
-
-#DirPort 9030 # what port to advertise for directory connections
-#DirPort 80 NoListen
-#DirPort 127.0.0.1:9091 NoAdvertise
-#DirPortFrontPage /etc/tor/tor-exit-notice.html
-
-#MyFamily $keyid,$keyid,...
-
-#ExitPolicy accept *:6660-6667,reject *:* # allow irc ports but no more
-#ExitPolicy accept *:119 # accept nntp as well as default exit policy
-#ExitPolicy reject *:* # no exits allowed
-
-#BridgeRelay 1
-#PublishServerDescriptor 0
+# #BridgeRelay 1
+# #PublishServerDescriptor 0
 
 
 
@@ -157,7 +128,7 @@ HiddenServicePort 8080 192.168.1.250:8080
 EOF.torrc
 
     [[ ${?} != ${exit_ok} ]] && (( _error_count++ ))
-    ${cmd_sed} -i '/^[[:space:]]*$/d' ${_path}/${_file_name}.cfg
+    # ${cmd_sed} -i '/^[[:space:]]*$/d' ${_path}/${_file_name}.cfg
 
     if [[ ${_error_count} > 0 ]]; then
       _exit_code=${exit_crit}
