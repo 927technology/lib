@@ -15,10 +15,11 @@
   # json/timestamp.f
 
   # argument variables
+  local _is_tenancy=${false}
   local _json=
   local _path=
   local _template=${false}
-
+  local _tenancy=
   
   # control variables
   local _error_count=0
@@ -89,6 +90,13 @@
       ;;
       -t | --template )
         _template=${true}
+      ;;
+      --tenancy )
+        shift
+        _tenancy=${1}
+      ;;
+      -T )
+        _is_tenancy=${true}
       ;;
     esac
     shift
@@ -413,8 +421,12 @@ $( [[ ! -z ${_statusmap_image} ]]               && ${cmd_printf} '%-1s %-32s %-5
 $( [[ ! -z ${_vrml_image} ]]                    && ${cmd_printf} '%-1s %-32s %-50s' "" vrml_image "${_vrml_image}" )
 $( [[ ! -z ${_use} ]]                           && ${cmd_printf} '%-1s %-32s %-50s' "" use "${_use}" )
 
+$( [[ ${_template} == ${false} ]]               && ${cmd_printf} '%-1s %-32s %-50s' "" _is_tenancy "${_is_tenancy}" )
 $( [[ ${_template} == ${false} ]]               && ${cmd_printf} '%-1s %-32s %-50s' "" _ops  \'"${_ops_json}"\' )
 $( [[ ${_template} == ${false} ]]               && ${cmd_printf} '%-1s %-32s %-50s' "" _iac  \'"${_iac_json}"\' )
+
+$( [[ ${_template} == ${false} ]] && \
+   [[ ${_is_tenancy} == ${false} ]]             && ${cmd_printf} '%-1s %-32s %-50s' "" _tenancy  "${_tenancy}" )
 }
 EOF.host
 

@@ -22,6 +22,7 @@ cmd_printf=/bin/printf
 cmd_rm=/bin/rm
 cmd_sed=/bin/sed
 cmd_sha256sum=/bin/sha256sum
+cmd_systemd=/usr/bin/systemd
 cmd_tail=/usr/bin/tail
 cmd_tar=/usr/bin/tar
 cmd_touch=/bin/touch

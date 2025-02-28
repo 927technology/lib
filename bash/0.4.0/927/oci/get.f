@@ -52,7 +52,10 @@
      [[ ! -z ${_profile}  ]]; then
     case ${_resource} in
       compartment | compartments )
-        _output=$( ${cmd_oci} --profile ${_profile} iam compartment list 2>/dev/null | ${cmd_jq} -c '.data[] | select(."defined-tags"."927-ops".managed == "true")' | ${cmd_jq} -s )
+        _output=$( ${cmd_oci} --profile ${_profile} iam compartment list --compartment-id-in-subtree true 2>/dev/null | ${cmd_jq} -c '.data[] | select(."defined-tags"."927-ops".managed == "true")' | ${cmd_jq} -s )
+      ;;
+      drg | drgs )
+        _output=$( ${cmd_oci} --profile ${_profile} network drg list 2>/dev/null | ${cmd_jq} -c '.data[] | select(."defined-tags"."927-ops".managed == "true")' | ${cmd_jq} -s )
       ;;
     esac
   fi

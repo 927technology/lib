@@ -1,4 +1,4 @@
-function query.docker.resource {
+function query.systemd.resource {
   # accepts 1 argument osuquery, returns json
 
   #local variables
@@ -24,34 +24,24 @@ function query.docker.resource {
 
   #main
   case ${_resource} in
-    image | images )
-      _docker_query='images'
-      _osquery_query='select * from docker_images;'
+    mount | mounts )
+      _systemctl_query='*.mount'
+      _osquery_query='select * from systemd_units where active_state = "active" and id like "%.mount";'
       _sanity=${true}
     ;;
-    image_layer | image_layers )
-      _docker_query=
-      _osquery_query='select * from docker_image_layers;'
+    service | services )
+      _systemctl_query='*.service'
+      _osquery_query='select * from systemd_units where active_state = "active" and id like "%.service";'
       _sanity=${true}
     ;;
-    info )
-      _docker_query='info'
-      _osquery_query='select * from docker_info;'
+    target | targets )
+      _systemctl_query='*.target'
+      _osquery_query='select * from systemd_units where active_state = "active" and id like "%.target";'
       _sanity=${true}
     ;;
-    network | networks )
-      _docker_query='networks'
-      _osquery_query='select * from docker_networks;'
-      _sanity=${true}
-    ;;
-    version )
-      _docker_query='version'
-      _osquery_query='select * from docker_version;'
-      _sanity=${true}
-    ;;
-    volume | volumes )
-      _docker_query='volume ls'
-      _osquery_query='select * from docker_volumes;'
+    timer | timers )
+      _systemctl_query='*.timer'
+      _osquery_query='select * from systemd_units where active_state = "active" and id like "%.timer";'
       _sanity=${true}
     ;;
     * )
@@ -65,14 +55,8 @@ function query.docker.resource {
     [[ ${?} != ${exit_ok} ]]                                          && (( _exit_code++ ))
 
   elif [[ ${_osquery} == ${false} ]] && [[ -f ${cmd_docker} ]] && [[ ${_sanity} == ${_true} ]]; then
-    case ${_resource} in 
-      image_layer | image_layers )
-        _json=$( ${cmd_docker} inspect $( ${cmd_docker} images --format json | ${cmd_jq} -r ".ID" ) | ${cmd_jq} '.[].RootFS.Layers' | ${cmd_jq} '.[] | split(":")[1]' | ${cmd_jq} -s ". | sort | unique" 2>/dev/null)
-      ;;
-      * )
-        _json=$( ${cmd_docker} ${_docker_query} --format json | ${cmd_jq} -s | ${cmd_jq} -c 2>/dev/null)
-      ;;
-    esac
+    _json=$( ${cmd_systemctl} ${_systemctl_query} --no-pager --output json | ${cmd_jq} -c 2>/dev/null)
+  
 
     [[ ${?} != ${exit_ok} ]]                                          && (( _exit_code++ ))
 
