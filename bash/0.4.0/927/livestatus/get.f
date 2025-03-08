@@ -26,10 +26,9 @@
 
   # variables
   local _json="{}"
-  local _json_resource=
+  local _json_resource="{}"
   local _output=
   local _resource_name=
-
 
   # parse command arguments
   while [[ ${1} != "" ]]; do
@@ -50,12 +49,10 @@
     shift
   done
 
-
   # main
   if [[ ! -z ${_host}     ]]               && \
      [[ ! -z ${_service}  ]]               && \
      [[ ! -z ${_resource} ]]; then
-
     case ${_resource} in
       compartment | compartments )
         _cloud_name=oci
@@ -74,11 +71,8 @@
         _resource_name=ops
       ;;
     esac
-
-
     _output=$( ${cmd_printf} "GET services\nColumns: plugin_output\nFilter: display_name = ${_service}\nFilter: host_name = ${_host}\n" | ${cmd_unixcat} /var/cache/naemon/live | ${cmd_jq} -c )
     [[ ${?} == ${exit_ok} ]] || (( _error_count++ ))
-
 
     case ${_service} in
       iac-config )
@@ -87,7 +81,7 @@
  
       ;;
       * )
-        _json_resource=$( ${cmd_echo} ${_output} | ${cmd_jq} 'if(try.data[0].'${_resource}') then .data[0].'${_resource}' else [] end' )
+        _json_resource=$( ${cmd_echo} ${_output} | ${cmd_jq} 'if(try.data[0].'${_resource}') then .data[0] else [] end' )
       ;;
     esac
 
@@ -99,11 +93,11 @@
 
   # write json
   ## configuration
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.data[0].'${_resource_name}'    |=.+ '"${_json_resource}" )
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.data[0]    |=.+ '"${_json_resource}" )
   _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.date                           |=.+ '"${_json_timestamp}" )
   
   # ## status
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.status.cloud                   |=.+ "'"${_cloud_name}"'"' )
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.status.provider                |=.+ "'"${_cloud_name}"'"' )
   _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.status.type                    |=.+ "'"${_resource_name}"'"' )
 
   # output
