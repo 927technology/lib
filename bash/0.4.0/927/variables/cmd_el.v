@@ -1,6 +1,7 @@
 # commands
 
 cmd_awk=/bin/awk
+cmd_bws=/usr/local/bin/bws
 cmd_cat=/bin/cat
 cmd_chown=/bin/chown
 cmd_chmod=/bin/chmod
