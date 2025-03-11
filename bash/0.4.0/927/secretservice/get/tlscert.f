@@ -85,7 +85,7 @@
         # oopsie
         (( _err_count++ ))
       fi
-
+    done
   else
     # oopsie
     (( _err_count++ ))
