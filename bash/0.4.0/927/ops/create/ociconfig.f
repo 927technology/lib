@@ -51,25 +51,27 @@
       bitwarden )
         # get config from secrets provider
         _json=$( ${cmd_bws} secret list | ${cmd_jq} -r '.[] | select(.key | startswith("config_oci")).value' | ${cmd_jq} -c )
+      ;;
+    esac
 
-        # ensure pull and validate are good
-        if [[ ${?} == ${exit_ok} ]] && [[ $( json.validate --json ${_json} ) == ${exit_ok} ]]; then
+    # ensure pull and validate are good
+    if [[ ${?} == ${exit_ok} ]] && [[ $( json.validate --json ${_json} ) == ${exit_ok} ]]; then
 
-          # create folder structure
-          ${cmd_mkdir} ${_path}/.oci
-          ${cmd_chmod} 550 ${_path}/.oci
+      # create folder structure
+      ${cmd_mkdir} ${_path}/.oci
+      ${cmd_chmod} 550 ${_path}/.oci
 
-          # parse json
-          for config in $(          ${cmd_echo} ${_json}  | ${cmd_jq} -c '.[]' ); do
-            _config_profile=$(      ${cmd_echo} ${config} | ${cmd_jq} -r '.profile' )
-            _config_user=$(         ${cmd_echo} ${config} | ${cmd_jq} -r '.user' )
-            _config_fingerprint=$(  ${cmd_echo} ${config} | ${cmd_jq} -r '.fingerprint' )
-            _config_tenancy=$(      ${cmd_echo} ${config} | ${cmd_jq} -r '.tenancy' )
-            _config_region=$(       ${cmd_echo} ${config} | ${cmd_jq} -r '.region' )
-            _config_keyfile=$(      ${cmd_echo} ${config} | ${cmd_jq} -r '.keyfile' )
+      # parse json
+      for config in $(          ${cmd_echo} ${_json}  | ${cmd_jq} -c '.[]' ); do
+        _config_profile=$(      ${cmd_echo} ${config} | ${cmd_jq} -r '.profile' )
+        _config_user=$(         ${cmd_echo} ${config} | ${cmd_jq} -r '.user' )
+        _config_fingerprint=$(  ${cmd_echo} ${config} | ${cmd_jq} -r '.fingerprint' )
+        _config_tenancy=$(      ${cmd_echo} ${config} | ${cmd_jq} -r '.tenancy' )
+        _config_region=$(       ${cmd_echo} ${config} | ${cmd_jq} -r '.region' )
+        _config_keyfile=$(      ${cmd_echo} ${config} | ${cmd_jq} -r '.keyfile' )
 
-            # create file
-            cat << eof_ociconfig > ${_path}/.oci/config
+        # create file
+        cat << eof_ociconfig > ${_path}/.oci/config
 [${_config_profile}]
 fingerprint=${_config_fingerprint}
 key_file=~naemon/secrets/${_config_keyfile}.pem
@@ -78,17 +80,15 @@ tenancy=${_config_tenancy}
 user=${_config_user}
 
 eof_ociconfig
-          done
+      done
 
-          # set permissions and mode.
-          ${cmd_chown} -R ${_owner}:${_group} ${_path}/.oci
-          ${cmd_chmod} 600 ${_path}/.oci/config
-        else
-          # oopsie
-          (( _err_count++ ))
-        fi
-      ;;
-    esac
+      # set permissions and mode.
+      ${cmd_chown} -R ${_owner}:${_group} ${_path}/.oci
+      ${cmd_chmod} 600 ${_path}/.oci/config
+    else
+      # oopsie
+      (( _err_count++ ))
+    fi
   else
     # oopsie
     (( _err_count++ ))
