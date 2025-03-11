@@ -15,6 +15,7 @@ cmd_kill=/bin/kill
 cmd_mkdir=/bin/mkdir
 cmd_naemon=/usr/bin/naemon
 cmd_oci=~/bin/oci
+cmd_openssl=/usr/bin/openssl
 cmd_osqueryi=/usr/bin/osqueryi
 cmd_pkill=/bin/pkill
 cmd_printf=/bin/printf

@@ -1,4 +1,4 @@
-927.ops.create.ociconfig () {
+927.sercretservice.get.ociconfig () {
   # description
   # creates oci cli configuration by using the configuration provided
   # accepts 2 arguments -

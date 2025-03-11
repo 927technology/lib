@@ -1,4 +1,4 @@
-927.ops.create.ocikeyfile () {
+927.secretservice.get.ocikeyfile () {
   # description
   # creates oci cli configuration by using the configuration provided
   # accepts 2 arguments -
