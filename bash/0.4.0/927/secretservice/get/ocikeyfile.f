@@ -17,6 +17,7 @@
   local _owner=
   local _path=
   local _secrets_provider=
+  local _verbose=${false}
   
   # local variables
   local _err_count=0
@@ -26,7 +27,7 @@
   # parse command arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -g  | --groups )
+      -g  | --group )
         shift
         _group=${1}
       ;;
@@ -42,12 +43,17 @@
         shift
         _secrets_provider=${1}
       ;;
+      -v  | --verbose )
+        _verbose=${true}
+      ;;
     esac
     shift
   done
 
+  [[ ${_verbose} == ${true} ]] && ${cmd_echo} group:${_group} owner:${_owner} path:${_path} secret:${_secrets_provider}
+
   if [[ ! -z ${_group} ]] && [[ ! -z ${_owner} ]] && [[ -d ${_path} ]] && [[ ! -z ${_secrets_provider} ]] ; then
-    case ${_provider} in
+    case ${_secrets_provider} in
       bitwarden )
         # get config from secrets provider
         _json=$( ${cmd_bws} secret list | ${cmd_jq} -r '.[] | select(.key | startswith("key"))' | ${cmd_jq} -c )
@@ -57,19 +63,17 @@
     # ensure pull and validate are good
     if [[ ${?} == ${exit_ok} ]] && [[ $( json.validate --json ${_json} ) == ${exit_ok} ]]; then
 
-      # create folder structure
-      ${cmd_mkdir} ${_path}/secrets
+      # create folder, set owner, group and mode
+      [[ ! -d ${_path}/secrets ]] && ${cmd_mkdir} ${_path}/secrets
+      ${cmd_chown} ${_owner}:${_group} ${_path}/secrets
       ${cmd_chmod} 550 ${_path}/secrets
 
-      for config in $(          ${cmd_echo} ${_json}  | ${cmd_jq} -c '.[]' ); do
-        _config_profile=$(      ${cmd_echo} ${config} | ${cmd_jq} -r '.key' ) 
-        _config_certificate=$(  ${cmd_echo} ${config} | ${cmd_jq} -r '.value' )
+      # get certificate
+      ${cmd_echo} "${_json}" | ${cmd_jq} -r '.value' > ${_path}/secrets/oci.pem
 
-        ${cmd_echo} ${_config_certificate} > ${_path}/secrets/${_config_profile}.pem
-
-        ${cmd_chown} ${_owner}:${_group}  ${_path}/secrets/${_config_profile}.pem
-        ${cmd_chmod} 600 ${_path}/secrets/${_config_profile}.pem
-      done
+      # set owner, group, and mode
+      ${cmd_chown} ${_owner}:${_group} ${_path}/secrets/oci.pem
+      ${cmd_chmod} 600 ${_path}/secrets/oci.pem
     else
       # oopsie
       (( _err_count++ ))

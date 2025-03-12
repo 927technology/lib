@@ -1,4 +1,4 @@
-927.sercretservice.get.ociconfig () {
+927.secretservice.get.ociconfig () {
   # description
   # creates oci cli configuration by using the configuration provided
   # accepts 2 arguments -
@@ -17,6 +17,7 @@
   local _owner=
   local _path=
   local _secrets_provider=
+  local _verbose=${false}
   
   # local variables
   local _err_count=0
@@ -26,7 +27,7 @@
   # parse command arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -g  | --groups )
+      -g  | --group )
         shift
         _group=${1}
       ;;
@@ -42,23 +43,29 @@
         shift
         _secrets_provider=${1}
       ;;
+      -v  | --verbose )
+        _verbose=${true}
+      ;;
     esac
     shift
   done
 
+  [[ ${_verbose} == ${true} ]] && ${cmd_echo} group:${_group} owner:${_owner} path:${_path} secret:${_secrets_provider}
+
   if [[ ! -z ${_group} ]] && [[ ! -z ${_owner} ]] && [[ -d ${_path} ]] && [[ ! -z ${_secrets_provider} ]] ; then
-    case ${_provider} in
+    case ${_secrets_provider} in
       bitwarden )
         # get config from secrets provider
         _json=$( ${cmd_bws} secret list | ${cmd_jq} -r '.[] | select(.key | startswith("config_oci")).value' | ${cmd_jq} -c )
       ;;
     esac
-
+    
     # ensure pull and validate are good
-    if [[ ${?} == ${exit_ok} ]] && [[ $( json.validate --json ${_json} ) == ${exit_ok} ]]; then
+    if [[ ${?} == ${exit_ok} ]]; then
 
-      # create folder structure
-      ${cmd_mkdir} ${_path}/.oci
+      # create folder structure, set owner, group, and mode
+      [[ ! -d ${_path}/.oci ]] && ${cmd_mkdir} ${_path}/.oci
+      ${cmd_chown} ${_owner}:${_group} ${_path}/.oci
       ${cmd_chmod} 550 ${_path}/.oci
 
       # parse json
@@ -74,7 +81,7 @@
         cat << eof_ociconfig > ${_path}/.oci/config
 [${_config_profile}]
 fingerprint=${_config_fingerprint}
-key_file=~naemon/secrets/${_config_keyfile}.pem
+key_file=~naemon/secrets/oci.pem
 region=${_config_region}
 tenancy=${_config_tenancy}
 user=${_config_user}
@@ -82,8 +89,8 @@ user=${_config_user}
 eof_ociconfig
       done
 
-      # set permissions and mode.
-      ${cmd_chown} -R ${_owner}:${_group} ${_path}/.oci
+      # set owner, group, and mode
+      ${cmd_chown} ${_owner}:${_group} ${_path}/.oci/config
       ${cmd_chmod} 600 ${_path}/.oci/config
     else
       # oopsie
