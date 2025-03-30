@@ -14,6 +14,7 @@
   local _exit_code=${exit_unkn}
   local _exit_string=
   local _json=
+  local _key=
   local _path=
 
   # parse command arguments
@@ -31,8 +32,8 @@
   if [[ -f ${_path} ]] && [[ $( json.validate -j "$( ${cmd_cat} ${_path} )" ) == ${true} ]]; then
     _json=$( ${cmd_cat} ${_path} | ${cmd_jq} -c )
     if [[ ${?} == ${exit_ok} ]]; then
-      _exit_code=${exit_ok}
       _exit_string="${_json}"
+      _exit_code=${exit_ok}
     else
       _exit_code=${exit_crit}
       _exit_string="{}"

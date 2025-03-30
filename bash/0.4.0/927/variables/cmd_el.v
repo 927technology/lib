@@ -1,6 +1,7 @@
 # commands
 
 cmd_awk=/bin/awk
+cmd_base64=/bin/base64
 cmd_bws=/usr/local/bin/bws
 cmd_cat=/bin/cat
 cmd_chown=/bin/chown
@@ -10,11 +11,14 @@ cmd_cp=/bin/cp
 cmd_curl=/bin/curl
 cmd_date=/bin/date
 cmd_echo=/bin/echo
+cmd_gearmand=/usr/sbin/gearmand
 cmd_head=/usr/bin/head
 cmd_httpd=/usr/sbin/httpd
+cmd_java=/usr/bin/java
 cmd_jq=/bin/jq
 cmd_kill=/bin/kill
 cmd_mkdir=/bin/mkdir
+cmd_mod_gearman_worker=/usr/bin/mod_gearman_worker
 cmd_naemon=/usr/bin/naemon
 cmd_oci=~/bin/oci
 cmd_openssl=/usr/bin/openssl
@@ -28,6 +32,8 @@ cmd_sleep=/bin/sleep
 cmd_su=/bin/su
 cmd_tail=/usr/bin/tail
 cmd_tar=/usr/bin/tar
+cmd_tr=/bin/tr
 cmd_touch=/bin/touch
 cmd_unixcat=/bin/unixcat
 cmd_useradd=/usr/sbin/useradd
+cmd_wc=/bin/wc

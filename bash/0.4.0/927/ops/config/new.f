@@ -12,8 +12,8 @@
   # json/validate.f
 
   # arguments variables
-  local _json_candidate=
-  local _json_running=
+  local _candidate=
+  local _running=
 
 
   # control variables
@@ -25,24 +25,24 @@
   # parse command arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -j | --json )
+      -j | -rs | --json | --running-string )
         shift
-        _json_running="${1}"
+        _running="${1}"
       ;;
-      -jc | --json-candidate )
+      -jc | -cs | --json-candidate | --candidate-string )
         shift
-        _json_candidate="${1}"
+        _candidate="${1}"
       ;;
     esac
     shift
   done  
 
   # main
-  if [[ ! -z ${_json_running} ]] && [[ ! -z ${_json_candidate} ]]; then
-    _json_running_hash=$( ${cmd_echo}  "${_json_running}" | ${cmd_sha256sum} | ${cmd_awk} '{print $1}' 2> /dev/null )
-    _json_candidate_hash=$( ${cmd_echo}  "${_json_candidate}" | ${cmd_sha256sum} | ${cmd_awk} '{print $1}' 2> /dev/null )
+  if [[ ! -z ${_running} ]] && [[ ! -z ${_candidate} ]]; then
+    _running_hash=$( ${cmd_echo}  "${_running}" | ${cmd_sha256sum} | ${cmd_awk} '{print $1}' 2> /dev/null )
+    _candidate_hash=$( ${cmd_echo}  "${_candidate}" | ${cmd_sha256sum} | ${cmd_awk} '{print $1}' 2> /dev/null )
 
-    if [[ ${_json_running_hash} == ${_json_candidate_hash} ]]; then
+    if [[ ${_running_hash} == ${_candidate_hash} ]]; then
       _exit_code=${exit_ok}
       _exit_string=${false}
 
