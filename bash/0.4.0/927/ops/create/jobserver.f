@@ -80,7 +80,7 @@
   echo $_path
   ${cmd_echo} 10
   echo ${_json} | jq '. | length'
-  echo $sERVER_ID
+  echo $SERVER_ID
   echo 12
   echo $_json | jq '.[0].enable'
   echo $_json | jq '.[0].ops[0].id'

@@ -65,6 +65,12 @@
         _owner=naemon
         _secrets_path=~naemon/secrets
       ;;
+      configserver )
+        _group=
+        _keys=
+        _owner=
+        _secrets_path=
+      ;;
       jobserver )
         _group=naemon
         _keys=(                                                                                     \
