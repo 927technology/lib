@@ -371,7 +371,7 @@
       _use=$(                             ${cmd_echo} ${host}  | ${cmd_jq} -r  'try( .ops[0].use )                        | if( . == null ) then "" else . end' )
     
 
-      ${cmd_echo} Writing Host: ${_path}/${_file_name}.cfg
+      shell.log --screen --message "Writing Host: ${_path}/${_file_name}.cfg"
       ${cmd_cat} << EOF.host > ${_path}/${_file_name}.cfg
 define host                        {
 $( [[ ! -z ${_2d_coords} ]]                     && ${cmd_printf} '%-1s %-32s %-50s' "" 2d_coords "${_2d_coords}" )

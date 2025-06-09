@@ -3,25 +3,29 @@ json.validate () {
   local _exit_code=${exit_unkn}
   local _exit_string=
   local _json=
+  local _tag=json.validate
 
   # parse command arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
       -j | --json )
         shift
-        _json=${1}
+        _json="${1}"
     esac
     shift
   done
 
+  # main
   if [[ ! -z "${_json}" ]]; then
     ${cmd_echo} "${_json}" | ${cmd_jq} 1> /dev/null 2> /dev/null
     
     if [[ ${?} == ${exit_ok} ]]; then
+      shell.log --tag ${_tag} --message "json validated successfully"
       _exit_code=${exit_ok}
       _exit_string=${true}
 
     else
+      shell.log --tag ${_tag} --message "json validated unsuccessfully"
       _exit_code=${exit_crit}
       _exit_string=${false}
 
@@ -29,6 +33,5 @@ json.validate () {
   fi
 
   # exit
-  ${cmd_echo} ${_exit_string}
   return ${_exit_code}
 }

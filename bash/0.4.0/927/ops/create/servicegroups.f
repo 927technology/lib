@@ -73,7 +73,7 @@
       _servicegroup_name=$(             ${cmd_echo} ${hostgroup}  | ${cmd_jq} -r  'try( .ops[0].name.string )                   | if( . == null ) then "" else . end' )
 
 
-      ${cmd_echo} Writing Host Group: ${_path}/${_file_name}.cfg
+      shell.log --screen --message "Writing Host Group: ${_path}/${_file_name}.cfg"
       ${cmd_cat} << EOF.servicegroup > ${_path}/${_file_name}.cfg
 define servicegroup                    {
 $( [[ ! -z ${_action_url} ]]            && ${cmd_printf} '%-1s %-32s %-50s' "" action_url "${_action_url}" )

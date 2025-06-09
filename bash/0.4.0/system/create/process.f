@@ -37,23 +37,23 @@ system.create.process() {
   done
 
   # main
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.process    |=.+ '"${_process}"'"' )
-  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.arguments  |=.+ '"${_arguments}"'"' )
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.process    |=.+ "'"${_process}"'"' )
+  _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.arguments  |=.+ "'"${_arguments}"'"' )
 
   if [[ -f ${_process} ]]; then
     ${_process} ${_arguments}
     _status=( $( ${cmd_echo} ${?} ${!} ) )
-    _pid=${_status[0]}
+    # _pid=${_status[1]}
 
     _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.present  |=.+ true' )
 
-    if [[ ${_status[0]} != ${exitok} ]]; then
-      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.pid  |=.+ '${_pid} )
-    else
-      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.pid  |=.+ null' )
+    # if [[ ${_status[0]} != ${exitok} ]]; then
+    #   _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.pid  |=.+ '${_pid} )
+    # else
+    #   _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.pid  |=.+ null' )
       
-      (( _error_count++ ))
-    fi
+    #   (( _error_count++ ))
+    # fi
 
   else
     _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.present  |=.+ false' )

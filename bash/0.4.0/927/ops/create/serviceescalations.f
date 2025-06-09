@@ -90,7 +90,7 @@
       _service_description=$(   ${cmd_echo} ${servicedependancy}  | ${cmd_jq} -r 'try( .ops[0].service_description )' )
 
 
-      ${cmd_echo} Writing Service Dependancy: ${_path}/${_file_name}.cfg
+      shell.log --screen --message "Writing Service Dependancy: ${_path}/${_file_name}.cfg"
       ${cmd_cat} << EOF.servicedependency > ${_path}/${_file_name}.cfg
 define servicedependency              {
 $( [[ ! -z ${_contacts} ]]              && ${cmd_printf} '%-1s %-32s %-50s' "" contacts "${_contacts}" )

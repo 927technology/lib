@@ -171,7 +171,7 @@
       # _workaround_rc_25=$(                ${cmd_echo} "${workerserver}"   | ${cmd_jq} -r  'try( .ops[0].workaround_rc_25 )              | if( . == '${true}' ) then "on" else "off" end' )
 
       # write file
-      ${cmd_echo} Writing Job Server/Worker: ${_path}/worker.conf
+      shell.log --screen --message "Writing Job Server/Worker: ${_path}/worker.conf"
       ${cmd_cat} << EOF.config > ${_path}/worker.conf
 debug=${_debug}
 $( [[ ! -z ${_dupserver_host} ]]                          &&  ${cmd_echo} dupserver=${_dupserver_host}:${_dupserver_port} )

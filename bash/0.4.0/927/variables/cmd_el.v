@@ -1,6 +1,7 @@
 # commands
 
 cmd_awk=/bin/awk
+cmd_adduser=/usr/sbin/adduser
 cmd_base64=/bin/base64
 cmd_bws=/usr/local/bin/bws
 cmd_cat=/bin/cat
@@ -19,6 +20,7 @@ cmd_httpd=/usr/sbin/httpd
 cmd_java=/usr/bin/java
 cmd_jq=/bin/jq
 cmd_kill=/bin/kill
+cmd_logger=/usr/bin/logger
 cmd_mkdir=/bin/mkdir
 cmd_mod_gearman_worker=/usr/bin/mod_gearman_worker
 cmd_naemon=/usr/bin/naemon

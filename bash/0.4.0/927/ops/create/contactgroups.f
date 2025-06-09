@@ -64,7 +64,7 @@
       
       _members=$(                       ${cmd_echo} ${contactgroup}  | ${cmd_jq}     'try( .ops[0].members[] )                  | select( .enable == true ).name' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
 
-      ${cmd_echo} Writing Contact Group: ${_path}/${_file_name}.cfg
+      shell.log --screen --message "Writing Contact Group: ${_path}/${_file_name}.cfg"
       ${cmd_cat} << EOF.contactgroup > ${_path}/${_file_name}.cfg
       
 define contactgroup               {

@@ -107,7 +107,7 @@
       
 
       # write file
-      ${cmd_echo} Writing Template/Contact: ${_path}/${_file_name}.cfg
+      shell.log --screen --message "Writing Template/Contact: ${_path}/${_file_name}.cfg"
       ${cmd_cat} << EOF.contact > ${_path}/${_file_name}.cfg
 define contact                     {
 $( [[ ! -z ${_alias} ]]                                   && ${cmd_printf} '%-1s %-32s %-50s\n' "" "alias" "${_alias}" )

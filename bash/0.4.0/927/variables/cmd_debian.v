@@ -1,6 +1,7 @@
 # commands
 
 cmd_awk=/bin/awk
+cmd_bws=/usr/local/bin/bws
 cmd_cat=/bin/cat
 cmd_chown=/bin/chown
 cmd_chmod=/bin/chmod
@@ -13,6 +14,7 @@ cmd_git=/usr/bin/git
 cmd_head=/usr/bin/head
 cmd_jq=/usr/bin/jq
 cmd_kill=/bin/kill
+cmd_logger=/usr/bin/logger
 cmd_mkdir=/bin/mkdir
 cmd_naemon=/usr/bin/naemon
 cmd_oci=~/bin/oci

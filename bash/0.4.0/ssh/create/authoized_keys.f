@@ -1,4 +1,4 @@
-ssh.create.chroot_config() {
+ssh.create.authorized_keys() {
   # dependancies
   # 927.bools.v
   # 927/cmd_el.v

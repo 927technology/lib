@@ -25,11 +25,11 @@
   # parse command arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -j | -rs | --json | --running-string )
+      -r | --running )
         shift
         _running="${1}"
       ;;
-      -jc | -cs | --json-candidate | --candidate-string )
+      -c | --candidate )
         shift
         _candidate="${1}"
       ;;
@@ -38,10 +38,11 @@
   done  
 
   # main
-  if [[ ! -z ${_running} ]] && [[ ! -z ${_candidate} ]]; then
+  if [[ ! -z "${_running}" ]] && [[ ! -z "${_candidate}" ]]; then
     _running_hash=$( ${cmd_echo}  "${_running}" | ${cmd_sha256sum} | ${cmd_awk} '{print $1}' 2> /dev/null )
     _candidate_hash=$( ${cmd_echo}  "${_candidate}" | ${cmd_sha256sum} | ${cmd_awk} '{print $1}' 2> /dev/null )
-
+echo $_running_hash
+echo $_candidate_hash
     if [[ ${_running_hash} == ${_candidate_hash} ]]; then
       _exit_code=${exit_ok}
       _exit_string=${false}

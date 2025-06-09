@@ -155,7 +155,7 @@
 
 
       # write file
-      ${cmd_echo} Writing Job Server/Worker: ${_path}/module.conf
+      shell.log --screen --message "Writing Job Server/Worker: ${_path}/module.conf"
       ${cmd_cat} << EOF.config > ${_path}/module.conf
 accept_clear_results=${_accept_clear_results}
 debug=${_debug}

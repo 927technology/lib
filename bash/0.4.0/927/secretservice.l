@@ -2,7 +2,12 @@
 # . ${_lib_root}/927/secretservice/get/jobserver.f
 # . ${_lib_root}/927/secretservice/get/ociconfig.f
 # . ${_lib_root}/927/secretservice/get/ocikeyfile.f
-. ${_lib_root}/927/secretservice/get/role.f
-. ${_lib_root}/927/secretservice/get/secrets.f
-# . ${_lib_root}/927/secretservice/get/tlscert.f
+# . ${_lib_root}/927/secretservice/get/role.f
+. ${_lib_root}/927/secretservice/get/bitwarden/keys.f
+. ${_lib_root}/927/secretservice/get/bitwarden/passwords.f
+. ${_lib_root}/927/secretservice/get/bitwarden/secrets.f
+. ${_lib_root}/927/secretservice/get/bitwarden/tlscerts.f
+. ${_lib_root}/927/secretservice/get/bitwarden/tlskeys.f
+. ${_lib_root}/927/secretservice/get/bitwarden/users.f
+# . ${_lib_root}/927/secretservice/get/secrets.f
 # . ${_lib_root}/927/secretservice/get/workerserver.f

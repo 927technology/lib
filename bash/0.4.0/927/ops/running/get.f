@@ -32,7 +32,7 @@
   if [[ -f ${_path} ]] && [[ $( json.validate -j "$( ${cmd_cat} ${_path} )" ) == ${true} ]]; then
     _json=$( ${cmd_cat} ${_path} | ${cmd_jq} -c )
     if [[ ${?} == ${exit_ok} ]]; then
-      _exit_string="${_json}"
+      _exit_string=$( ${cmd_echo} "${_json}" | ${cmd_jq} -c )
       _exit_code=${exit_ok}
     else
       _exit_code=${exit_crit}

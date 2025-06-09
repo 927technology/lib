@@ -92,7 +92,7 @@
       _servicegroup_name=$(             ${cmd_echo} ${servicedependancy}  | ${cmd_jq}     'try( .ops[0].servicegroups[]         | select( .enable == true ).string' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
 
 
-      ${cmd_echo} Writing Service Dependancy: ${_path}/${_file_name}.cfg
+      shell.log --screen --message "Writing Service Dependancy: ${_path}/${_file_name}.cfg"
       ${cmd_cat} << EOF.servicedependency > ${_path}/${_file_name}.cfg
 define servicedependency              {
 $( [[ ! -z ${_dependency_period} ]]             && ${cmd_printf} '%-1s %-32s %-50s' "" dependency_period "${_dependency_period}" )

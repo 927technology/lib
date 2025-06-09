@@ -1,10 +1,10 @@
-function http.status {
+http.status () {
   # accepts 1 argument url to webserver, returns json
 
   #local variables
   local _code=
   local _description=""
-  local _err_count=0
+  local _error_count=0
   local _exit_code=${exit_unkn}
   local _json="{}"
   local _name=""
@@ -281,21 +281,22 @@ function http.status {
         _description="Indicates that the client needs to authenticate to gain network access."
       ;;
       *)
+        _code=null
         _name="unknown"
         _description="Status is Unknown."
-        (( _err_count++ ))
+        (( _error_count++ ))
       ;;
     esac
 
     _json=`${cmd_echo} ${_json} | ${cmd_jq} '. |=.+ {"url":"'${_url}'"}'`
-    _json=`${cmd_echo} ${_json} | ${cmd_jq} '. |=.+ {"code":"'${_code}'"}'`
+    _json=`${cmd_echo} ${_json} | ${cmd_jq} '. |=.+ {"code":'${_code}'}'`
     _json=`${cmd_echo} ${_json} | ${cmd_jq} '. |=.+ {"name":"'"${_name}"'"}'`
     _json=`${cmd_echo} ${_json} | ${cmd_jq} '. |=.+ {"description":"'"${_description}"'"}'`
   else
-    (( _err_count++ ))
+    (( _error_count++ ))
   fi
 
-  [[ ${_err_count} > 0 ]]                                           && _exit_code=${exit_crit}
+  [[ ${_error_count} > 0 ]]                                           && _exit_code=${exit_crit}
 
   #output
   ${cmd_echo} ${_json} | ${cmd_jq} -c

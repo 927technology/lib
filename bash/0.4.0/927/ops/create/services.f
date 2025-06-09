@@ -261,7 +261,7 @@
       _use=$(                             ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].use )                             | if( . == null ) then "" else . end' )
 
 
-      ${cmd_echo} Writing Service: ${_path}/${_file_name}.cfg
+      shell.log --screen --message "Writing Service: ${_path}/${_file_name}.cfg"
       ${cmd_cat} << EOF.service > ${_path}/${_file_name}.cfg
 define service                     {
 $( [[ ! -z ${_active_checks_enabled} ]]         && ${cmd_printf} '%-1s %-32s %-50s' "" active_checks_enabled "${_active_checks_enabled}" )
