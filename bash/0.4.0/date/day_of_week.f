@@ -5,9 +5,9 @@ date.day_of_week() {
 	# local variables
 	# none
 
-  # control variables
+	# control variables
 	local _exit_code=${exit_unkn}
-  local _exit_string=
+	local _exit_string=
 
 	# parse arguments
 	# none
@@ -16,7 +16,7 @@ date.day_of_week() {
 	_exit_string=$( ${cmd_date} +'%u' )
 	[[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
-  # exit
-  ${cmd_echo} ${_exit_string}
-  return ${_exit_code}
+	# exit
+	${cmd_echo} ${_exit_string}
+	return ${_exit_code}
 }
