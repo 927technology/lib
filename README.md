@@ -8,13 +8,22 @@ I find it difficult to follow shell scripts written by various people.  To help 
 
 * [File Types](./documentation/types.md)
 * [Adding Libraries to your project](./documentation/git.md)
-* [Using Libraries to your project](./documentation/sourcing.md)
+* [Using Libraries in your project](./documentation/sourcing.md)
 
 &nbsp;
 ### Libraries
 
 |Name|Description|
 |:-|:-|
-|[date](./bash/0.4.0/date)|display and modify timedate|
-|[http](./bash/0.4.0/http)|display http status|
-
+|[date](./bash/0.4.0/date)||
+|docker||
+|git||
+|hash||
+|[http](./bash/0.4.0/http)||
+|json||
+|secret service||
+|shell||
+|ssh||
+|standard||
+|system||
+|variables||
