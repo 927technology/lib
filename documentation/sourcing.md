@@ -18,11 +18,11 @@ or
 Sourcing libraries into your scripts will reduce time coding and troubleshooting by utilizing tested functions.
 
 To source file into your script use the source command or .
-> . ${_lib_root}/date.year
+> . ${_lib_root}/date/year.f
 
 or 
 
-> source ${_lib_root}/date.year
+> source ${_lib_root}/date/year.f
 
 You may source in individual functions or complete libraries of function with a single source.
 > . ${_lib_root}/date.l
@@ -58,9 +58,9 @@ _lib_version=0.4.0
 # set your _lib_root path
 _lib_root=/usr/local/lib/bash/${_lib_vesion}
 
-# source in required library of variables.l which sources in
-# variables/bools.v and variables/exits.v.  
-# it will also try to determine your OS release and source 
+# source in required library of variables.l which contains
+# variables/bools.v and variables/exits.v.  it will also 
+# attempt to determine your OS release and source 
 # the proper cmd library.
 . ${_lib_root}/variables.l
 
