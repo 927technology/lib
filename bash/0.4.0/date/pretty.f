@@ -1,12 +1,12 @@
 date.pretty() {
   # description
   # accepts no args.  returns date in YYYY-MM-DD_HH:MM:SS
-  
+
   # local variables
-	# none
+  # none
 
   # control variables
-	local _exit_code=${exit_unkn}
+  local _exit_code=${exit_unkn}
   local _exit_string=
 
   # parse arguments
