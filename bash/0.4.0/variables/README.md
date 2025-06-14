@@ -4,10 +4,10 @@
 
 |Name|Input|Output|Description|
 |:---|:-|:-|:-------------|
-|bools|none|none|boolean values|
-|cmd/el|none|none|enterprise linux commands|
-|cmd/debian|none|none|debian linux commands|
-|exits|none|none|exit codes|
+|[bools](./bools.v)|none|none|boolean values|
+|[cmd/el](./cmd/el.v)|none|none|enterprise linux commands|
+|[cmd/debian](./cmd/debain.v)|none|none|debian linux commands|
+|[exits](./exits.v)|none|none|exit codes|
 
 &nbsp;
 #### Source Command

@@ -4,7 +4,7 @@
 
 |Name|Input|Output|Description|
 |:---|:-|:-|:-------------|
-|http.status|[arguments](./documentation/http.status.md)|json|http status return code and description of the code|
+|[http.status](./status.f)|[arguments](./documentation/http.status.md)|json|http status return code and description of the code|
 
 #### Source Command
 > . ${_lib_root}/http.l
