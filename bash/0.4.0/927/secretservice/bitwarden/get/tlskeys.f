@@ -1,11 +1,11 @@
-927.secretservice.get.bitwarden.keys () {
+927.secretservice.bitwarden.get.tlskeys () {
   # description
-  # retrieves bitwarden tls certs
+  # retrieves bitwarden tls keys
 
   # dependancies
-  # 927.bools.v
-  # 927/cmd_<platform>.v
-  # 927/nagios.v
+  # variables/cmd/<distro>.v
+  # variables/bools.v
+  # variables/exits.v
   # json/validate.f
 
   # argument variables
@@ -17,7 +17,7 @@
   local _error_count=0
   local _exit_code=${exit_warn}
   local _exit_string=
-  local _tag=927.secretservice.get.bitwarden.keys
+  local _tag=927.secretservice.get.bitwarden.tlskeys
 
   # parse command arguments
   # none
@@ -27,27 +27,27 @@
   [[ ! -z ${BWS_ACCESS_TOKEN} ]] && _token=${true}
 
   # print arguments to syslog
-  shell.log --tag ${_tag} --message "token:${_token} provider:bitwarden key_type:key"
+  shell.log --tag ${_tag} --message "token:${_token} provider:bitwarden key_type:tls-key"
 
   if [[ ${_token} == ${true} ]]; then
-    _json=$( ${cmd_bws} secret list | ${cmd_jq} '.[] | select(.key | startswith("key"))' )
+    _json=$( ${cmd_bws} secret list | ${cmd_jq} '.[] | select(.key | startswith("tls-key"))' )
 
     # validate success
     if [[ ${?} == ${exit_ok} ]]; then
-      shell.log --tag ${_tag} --message "keys retrieved successfully"
+      shell.log --tag ${_tag} --message "tls-key retrieved successfully"
 
     else 
-      shell.log --tag ${_tag} --message "keys retrieved unsuccessfully"
+      shell.log --tag ${_tag} --message "tls-key retrieved unsuccessfully"
       (( _error_count++ ))
     fi
 
     # validate json
     json.validate --json "${_json}"
     if [[ ${?} == ${exit_ok} ]]; then
-      shell.log --tag ${_tag} --message "keys json validated successfully"
+      shell.log --tag ${_tag} --message "tls-key json validated successfully"
 
     else 
-      shell.log --tag ${_tag} --message "keys json validated unsuccessfully"
+      shell.log --tag ${_tag} --message "tls-key json validated unsuccessfully"
       (( _error_count++ ))
     fi
 

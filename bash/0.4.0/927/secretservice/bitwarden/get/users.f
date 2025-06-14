@@ -1,4 +1,4 @@
-927.secretservice.get.bitwarden.users () {
+927.secretservice.bitwarden.get.users () {
   # description
   # retrieves bitwarden tls certs
 
