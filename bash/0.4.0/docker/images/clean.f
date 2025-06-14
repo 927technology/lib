@@ -1,9 +1,12 @@
 docker.images.clean () {
+  IFS=$'\n' # because IFS sucks
   # description
 
+  # dependancies
+  # json/images
+
   # local variables
-  local _count=0
-  local _json=
+  local _json=$( docker.images )
 
   # control variables
   local _error_count=0
@@ -14,14 +17,11 @@ docker.images.clean () {
   # none
 
   # main
-  for image in $( ${cmd_docker} images | ${cmd_grep} none ); do 
-    ${cmd_docker} rmi ${cmd_echo} ${image} | ${cmd_awk} '{print $3}'    || (( _error_count++ ))
-    (( count++ ))
+  for image in $( ${cmd_echo} ${_json} | ${cmd_jq} -cr '.[] | if(.Repository == .ID) then .ID else empty end' ); do 
+    ${cmd_docker} rmi ${image} || (( _error_count++ ))
   done
 
   [[ ${_error_count} > 0 ]] && _exit_code=${exit_crit} || _exit_code=${exit_ok}
-
-  _exit_string="${_count} images cleaned"
 
   # exit
   ${cmd_echo} ${_exit_string}

@@ -16,14 +16,14 @@ I find it difficult to follow shell scripts written by various people.  To help 
 |Name|Description|
 |:-|:-|
 |[date](./bash/0.4.0/date)||
-|docker||
-|git||
-|hash||
+|[docker](./bash/0.4.0/docker)||
+|[git](./bash/0.4.0/git)||
+|[hash](./bash/0.4.0/hash)||
 |[http](./bash/0.4.0/http)||
-|json||
-|secret service||
-|shell||
-|ssh||
-|standard||
-|system||
-|variables||
+|[json](./bash/0.4.0/json)||
+|[secretservice](./bash/0.4.0/secretservice)||
+|[shell](./bash/0.4.0/shell)||
+|[ssh](./bash/0.4.0/ssh)||
+|[standard](./bash/0.4.0/standard)||
+|[system](./bash/0.4.0/system)||
+|[variables](./bash/0.4.0/variables)||
