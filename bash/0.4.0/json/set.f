@@ -1,4 +1,7 @@
 json.set() {
+  # dependancies
+  # json/set
+
   # local variables
   local _json="{}"
   local _key=
@@ -30,12 +33,27 @@ json.set() {
   # main
   case $( ${cmd_echo} "${_value}" | is_integer ) in
     ${true} )
-      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= '${_value} )
+      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'     |= '${_value} )
       [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
     ;;
     ${false} )
-      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= "'"${_value}"'"' )
+      if    [[ -z ${_value} ]]; then
+        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= null' )
+      
+      elif  [[ $( ${cmd_echo} ${_value} | is_json ) == ${true} ]]; then
+        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= '${_value} )
+
+      elif  [[ ${_value} == {} ]]; then
+        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= {}' )
+ 
+      elif  [[ ${_value} == [] ]]; then
+        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= []' )
+
+      else
+        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= "'"${_value}"'"' )
+      
+      fi
       [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
     ;;

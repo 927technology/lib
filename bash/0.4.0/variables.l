@@ -1,17 +1,17 @@
-. ${_lib_root}/927/variables/bools.v
-. ${_lib_root}/927/variables/exits.v
+. ${_lib_root}/variables/bools.v
+. ${_lib_root}/variables/exits.v
 
-case $( uname -a ) in
+case $( uname -s ) in
   Darwin )
-    . ${_lib_root}/927/variables/cmd/darwin.v
+    . ${_lib_root}/variables/cmd/darwin.v
 
   ;;
   Linux )
     if    [[ -f /etc/redhat-release ]]; then
-      . ${_lib_root}/927/variables/cmd/el.v
+      . ${_lib_root}/variables/cmd/el.v
 
     elif  [[ -f /etc/lsb-release ]]; then
-      . ${_lib_root}/927/variables/cmd/debian.v
+      . ${_lib_root}/variables/cmd/debian.v
 
     fi
   ;;

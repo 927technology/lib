@@ -1,4 +1,4 @@
-secretservice.create.secret () {
+secretservice.create.secret() {
   # description
   # creates oci cli configuration by using the configuration provided
   # accepts 2 arguments -

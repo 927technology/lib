@@ -1,110 +1,88 @@
 shell.log () {
   # description
-  # accepst 1 argument of string and prints timestamp and that string to the screen
-  # and the system log
-  ## -m | --message is the message to print to screen/syslog
+  # accepts arguments and prints to screen and/or syslog
+  ## -m | --message is the string to print to screen/syslog
   ## -s | --screen sets if the message will be printed to the screen
   ## -t | --tag sets the syslog tag to be used. syslog will not be used if tag is not specified
+  ## -j | --json message is in json format.  json overwrites message if both are present
 
   # dependancies
-  # 927/cmd_<platform>.v
-  # 927/nagios.v
   # date/pretty.f
+  # json/set.f
   # standard/is_json.f
+  # variables/cmd_<platform>.v
+  # variables/exits.v
 
   IFS=$'\n'  # because IFS sucks
 
   # argument variables
-  local _remote_server=
+  local _message=
+  local _json_message=
   local _screen_output=${false}
   local _syslog_tag=
-  local _message="{}"
 
-  # local variables
-  local _date=$( date.pretty )
+  # control variables
   local _error_count=0
   local _exit_code=${exit_warn}
   local _exit_string=
+
+  # local variables
   local _is_json=${false}
   local _json="{}"
-  local _syslog_string=
-  local _type=
+  local _remote_server=
 
   # parse command arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
       -j  | --json )
-        _is_json=${true}
         shift
-        _message=${1}
+        # validate json
+        if [[ $( ${cmd_echo} "${1}" | is_json ) == ${true} ]]; then
+          _is_json=${true}
+          _json_message="${1}"
+        else
+          _json_message="{}"
+        fi
       ;;
       -m  | --message )
         shift
-        _message=${1}
-      ;;
-      -r  | --remote )
-        shift
-        _remote_server=${1}
+        _message="${1}"
       ;;
       -s  | --screen )
         _screen_output=${true}
       ;;
       -t  | --tag )
         shift
-        _syslog_tag=${1}
-      ;;
-      -T  | --type )
-        shift
-        _type=${1}
+        _syslog_tag="${1}"
       ;;
     esac
     shift
   done
 
   # main
+  # message is not empty
+  if  [[ ! -z ${_message}       ]]  ||
+      [[ ! -z ${_json_message}  ]]; then
 
-  ## message is not empty
-  if [[ ! -z ${_message} ]]; then
-    ## output to screen
-    if [[ ${_screen_output} == ${true} ]]; then
-      _exit_string=$( ${cmd_echo} ${_date} - ${_message} 2>/dev/null )
-      
-      # set exit string on failure
-      if [[ ${?} != ${exit_ok} ]]; then
-        _exit_string=
-        (( _error_count++ ))
-      fi
+    # parse message from json if present
+    [[ ${_is_json} == ${true} ]] && _message=$( ${cmd_echo} ${_json_message} | ${cmd_jq} -r 'try(.message) | if( . != null ) then . else "no message provided" end' ) || (( _error_count++ ))
 
-    fi
+    # add runid to json
+    [[ ! -z ${RUN_ID} ]] && [[ ${_is_json} == ${true} ]] && _json_message=$( json.set --json ${_json_message} --key .run_id --value ${RUN_ID} || (( _err_count++ )) ) 
 
-    ## syslog output
-    if [[ ! -z ${_remote_server} ]]; then
+    # add runid to message
+    [[ ! -z ${RUN_ID} ]] && _message=$( ${cmd_echo} "${RUN_ID}: ${_message}" || (( _error_count++ )) )
 
-      # format message output
-      if [[ ${_is_json} == ${true} ]]; then
-        _message=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '.message |=.+ '"${_message}" )
+    # output to screen
+    [[ ${_screen_output} == ${true} ]] && _exit_string=$( ${cmd_echo} "$( date.pretty ) - ${_message}" 2>/dev/null || (( _error_count++ )) )
 
-        if [[ ! -z ${RUN_ID} ]]; then
-          # add id to message
-          _message=$( ${cmd_echo} ${_message} | ${cmd_jq} -c '.id |=.+ "'"${RUN_ID}"'"' )
-        fi
-      
-      else
-        if [[ ! -z ${RUN_ID} ]]; then
-          # add id to message
-          _message=$( ${cmd_echo} ${RUN_ID} - ${_message} )
-        fi
-      
-      fi
+    # output to syslog
+    if [[ ! -z ${_syslog_tag} ]]; then
+      # set syslog server to local host if none is provided
+      [[ -z ${_remote_server} ]] && _remote_server=localhost
 
       # output message
-      ${cmd_logger} --tag ${_syslog_tag} --server ${_remote_server} "${_message}"
-
-      # set exit string on failure
-      if [[ ${?} != ${exit_ok} ]]; then
-        (( _error_count++ ))
-      fi
-    
+      ${cmd_logger} --tag ${_syslog_tag} --server ${_remote_server} "${_message}" || (( _error_count++ ))
     fi
   fi
 
