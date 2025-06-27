@@ -5,6 +5,7 @@ shell.log () {
   ## -s | --screen sets if the message will be printed to the screen
   ## -t | --tag sets the syslog tag to be used. syslog will not be used if tag is not specified
   ## -j | --json message is in json format.  json overwrites message if both are present
+  ## -r | --remote-server is the address of the remote syslog server
 
   # dependancies
   # date/pretty.f
@@ -47,6 +48,10 @@ shell.log () {
       -m  | --message )
         shift
         _message="${1}"
+      ;;
+      -r  | --remote-server )
+        shift
+        _remote_server=${1}
       ;;
       -s  | --screen )
         _screen_output=${true}
