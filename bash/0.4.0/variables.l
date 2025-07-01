@@ -1,5 +1,6 @@
 . ${_lib_root}/variables/bools.v
 . ${_lib_root}/variables/exits.v
+. ${_lib_root}/variables/outputs.v
 
 case $( uname -s ) in
   Darwin )

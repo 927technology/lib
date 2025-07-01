@@ -141,7 +141,7 @@
 
       _action_url=$(                      ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].action_url )                      | if( . == null ) then "" else . end' )
 
-      _active_checks_enabled=$(           ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.active )                    | if( . == null ) then "" else . end' )
+      _active_checks_enabled=$(           ${cmd_echo} ${service}  | ${cmd_jq} -r  'if( try( .ops[0].check.active  ) != null ) then ( .ops[0].check.active  |  if( . == true ) then '${true}' else '${false}' end ) else "" end' )
       
       _check_command=$(                   ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.command )                   | if( . == null ) then "" else . end' )
       
@@ -159,7 +159,7 @@
       
       _max_check_attempts=$(              ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.max_attempts )              | if( . == null ) then "" else . end' )
       
-      _passive_checks_enabled=$(          ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.passive )                   | if( . == null ) then "" else . end' )
+      _passive_checks_enabled=$(          ${cmd_echo} ${service}  | ${cmd_jq} -r  'if( try( .ops[0].check.passive  ) != null ) then ( .ops[0].check.passive  |  if( . == true ) then '${true}' else '${false}' end ) else "" end' )
       
       _process_perf_data=$(               ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].check.perfdata )                  | if( . == null ) then "" else ( if( . == true ) then '${true}' else '${false}' end ) end' )
       

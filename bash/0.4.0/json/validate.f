@@ -17,17 +17,17 @@ json.validate () {
 
   # main
   if [[ ! -z "${_json}" ]]; then
-    ${cmd_echo} "${_json}" | ${cmd_jq} 1> /dev/null 2> /dev/null
+    ${cmd_echo} "${_json}" | ${cmd_jq} > /dev/null 2>&1
     
     if [[ ${?} == ${exit_ok} ]]; then
       shell.log --tag ${_tag} --message "json validated successfully"
       _exit_code=${exit_ok}
-      _exit_string=${true}
+      # _exit_string=${true}
 
     else
       shell.log --tag ${_tag} --message "json validated unsuccessfully"
       _exit_code=${exit_crit}
-      _exit_string=${false}
+      # _exit_string=${false}
 
     fi
   fi

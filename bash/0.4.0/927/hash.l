@@ -1,0 +1,1 @@
+. ${_lib_root}/hash/sum/to_sha256.f
