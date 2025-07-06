@@ -175,7 +175,6 @@
       
       _file_name=$(                       ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].name.string )                     | if( . == null ) then "" else . end' )
       
-      
       _flap_detection_enabled=$(          ${cmd_echo} ${service}  | ${cmd_jq} -r  ' try( .ops[0].flap_detection_enabled )          | if( . == true ) then '${true}' else '${false}' end' )
       
       _flap_detection_options=$(          ${cmd_echo} ${service}  | ${cmd_jq}     'try( .ops[0].flap_detection.options )           | to_entries[] | select( .value == true ) | .key[0:1]' | ${cmd_jq} -sr '. | if( . | length < 1 ) then "" else join(", ") end' )
@@ -240,6 +239,11 @@
       
       _first_notification_delay=$(        ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].notification.first_delay )        | if( '${_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       
+
+      _name=$(                            ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].name.string )                      | if( . == null ) then "" else . end' )
+
+
+
       _notification_interval=$(           ${cmd_echo} ${service}  | ${cmd_jq} -r  'try( .ops[0].notification.interval )           | if( '${_notifications_enabled}' == '${false}' ) then "" else ( if( . == null ) then "" else . end ) end' )
       
       _notification_options=$(            ${cmd_echo} ${service}  | ${cmd_jq}     'try( .ops[0].notification.options )            | to_entries[] | select(.value == true) | .key[0:1]' | ${cmd_jq} -sr '. | if( '${_notifications_enabled}' == '${false}' ) then "" else ( if( . | length < 1 ) then "" else join(", ") end ) end' )
@@ -290,6 +294,7 @@ $( [[ ! -z ${_icon_image} ]]                    && ${cmd_printf} '%-1s %-32s %-5
 $( [[ ! -z ${_icon_image_alt} ]]                && ${cmd_printf} '%-1s %-32s %-50s' "" icon_image_alt"${_icon_image_alt}" )
 $( [[ ! -z ${_is_volatile} ]]                   && ${cmd_printf} '%-1s %-32s %-50s' "" is_volatile "${_is_volatile}" )
 $( [[ ! -z ${_display_name} ]]                  && ${cmd_printf} '%-1s %-32s %-50s' "" display_name "${_display_name}" )
+$( [[ ! -z ${_name} ]]                          && ${cmd_printf} '%-1s %-32s %-50s' "" name "${_name}" )
 $( [[ ! -z ${_service_description} ]]           && ${cmd_printf} '%-1s %-32s %-50s' "" service_description "${_service_description}" )
 $( [[ ! -z ${_notes} ]]                         && ${cmd_printf} '%-1s %-32s %-50s' "" notes "${_notes}" )
 $( [[ ! -z ${_notes_url} ]]                     && ${cmd_printf} '%-1s %-32s %-50s' "" notes_url "${_notes_url}" )

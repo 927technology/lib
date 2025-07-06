@@ -1,29 +1,27 @@
-927.ops.create.jobserver () {
+927.ops.create.mod_gearman-module() {
   # description
   # creates ops templates stanzas based on json configuration provided
-  # accepts 2 arguments -
-  ## -j/--json json snippit at the root of the commands list
-  ## -p/--path the full path to the associated conf.d write path
+  # accepts 0 arguments -
 
   # dependancies
   # 927.bools.v
-  # 927/cmd_el.v
-  # 927/nagios.v
-  # json/validate.f
-
+  # 927/cmd_<platform>.v
+  # 927/exits.v
 
   # argument variables
-  local _json=
-  local _path=
   local _template=${false}
-
 
   # control variables
   local _error_count=0
   local _exit_code=${exit_unkn}
   local _exit_string=
 
-
+  # variables
+  local _json="{}"
+  local _path_gearmand=/etc/mod_gearman
+  local _path_naemon=/etc/naemon
+  local _path_927=/etc/927
+  
   # worker variables
   local _accept_clear_results=
   local _debug=
@@ -59,34 +57,13 @@
   local _services=
   local _use_uniq_jobs=
 
-
   # parse command arguments
-  while [[ ${1} != "" ]]; do
-    case ${1} in
-      -j | --json )
-        shift
-        _json="${1}"
-      ;;
-      -p | --path )
-        shift
-        _path=${1}
-      ;;
-    esac
-    shift
-  done
-
+  # none
 
   ## main
-  echo $_path
-  ${cmd_echo} 10
-  echo ${_json} | jq '. | length'
-  echo $SERVER_ID
-  echo 12
-  echo $_json | jq '.[0].enable'
-  echo $_json | jq '.[0].ops[0].id'
-  echo 13
+  _json=$( ${cmd_cat} ${_path_927}${_path_naemon}/candidate/configuration.json | ${cmd_jq} -c '.jobserver[0].ops' )
+
   if [[ ! -z "${_json}" ]] && [[ $( ${cmd_echo} "${_json}" | ${cmd_jq} '.[] | length' ) > 0 ]]; then
-    # [[ ! -d ${_path} ]] && ${cmd_mkdir} -p ${_path} || ${cmd_rm} -rf ${_path}/*
 
     for jobserver in $(                   ${cmd_echo} "${_json}"        | ${cmd_jq} -c '.[] | select(( .enable == true ) and .ops[0].id == "'${SERVER_ID}'")' ); do 
       _accept_clear_results=$(            ${cmd_echo} "${jobserver}"    | ${cmd_jq} -r  'try( .ops[0].accept_clear_result )           | if( . == '${true}' ) then "yes" else "no" end' )
@@ -122,7 +99,7 @@
       
       # _key=$(                             ${cmd_echo} "${jobserver}"    | ${cmd_jq} -r  'try( .ops[0].encryption.key' ) 
         
-      _keyfile=$(                         ${cmd_echo} "${jobserver}"    | ${cmd_jq} -r  'try( .ops[0].encryption.keyfile )            | if( . == null ) then "secrets/module.pwd" else . end' )
+      _keyfile=$(                         ${cmd_echo} "${jobserver}"    | ${cmd_jq} -r  'try( .ops[0].encryption.keyfile )            | if( . == null ) then "/secrets/module.pwd" else . end' )
       
       _notifications=$(                   ${cmd_echo} "${jobserver}"    | ${cmd_jq} -r  'try( .ops[0].notifications )                 | if( . == '${true}' ) then "yes" else "no" end' )
       
@@ -153,10 +130,9 @@
       
       _use_uniq_jobs=$(                   ${cmd_echo} "${jobserver}"    | ${cmd_jq} -r  'try( .ops[0].use_uniq_jobs )                 | if( . == '${true}' ) then "on" else "off" end' )
 
-
       # write file
-      shell.log --screen --message "Writing Job Server/Worker: ${_path}/module.conf"
-      ${cmd_cat} << EOF.config > ${_path}/module.conf
+      shell.log --screen --message "Writing Job Server/Worker: ${_path_gearmand}/module.conf"
+      ${cmd_cat} << EOF.config > ${_path_gearmand}/module.conf
 accept_clear_results=${_accept_clear_results}
 debug=${_debug}
 do_hostchecks=${_do_hostchecks}
@@ -211,7 +187,7 @@ use_uniq_jobs=${_use_uniq_jobs}
 EOF.config
 
       [[ ${?} != ${exit_ok} ]] && (( _error_count++ ))
-      ${cmd_sed} -i '/^[[:space:]]*$/d' ${_path}/module.conf
+      ${cmd_sed} -i '/^[[:space:]]*$/d' ${_path_gearmand}/module.conf
     done 
 
     if [[ ${_error_count} > 0 ]]; then
@@ -223,10 +199,15 @@ EOF.config
       _exit_strin=${true}
 
     fi
-
-    # exit
-    ${cmd_echo} ${_exit_string}
-    return ${_exit_code}
-
   fi
+
+  # exit
+  # set _exit_code
+  [[ ${_error_count} == 0 ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit} 
+  
+  # print non-zero length _exit_string to screen
+  [[ ! -z ${_exit_string} ]] && ${cmd_echo} ${_exit_string}
+  
+  # return _exit_code
+  return ${_exit_code}
 }

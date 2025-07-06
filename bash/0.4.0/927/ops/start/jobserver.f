@@ -1,65 +1,66 @@
-927.ops.start.manager () {
+927.ops.start.jobserver() {
   # description
   # 
 
   # dependancies
   # 927.bools.v
   # 927/cmd_<platform>.v
-  # 927/nagios.v
-  # 927/secretservice.l
-  # shell.l
-  # json/validate.f 
+  # 927/exits.v
 
   # argument variables
-  # none
+  local _json="{}"
+  local _json_secrets="{}"
 
   # control variables
   local _error_count=0
   local _exit_code=${exit_unkn}
   local _exit_string=
-
+  local _restart=${false}
 
   # local variables
-  local _count_role_secrets=0
-  local _json_secrets=
-  local _json_role_secrets=
-  local _naemon_configurations=contacts,contactgroups,commands,hostgroups,services,timeperiods
-  local _naemon_infrastructures=hosts/clouds,hosts/clouds/tenants
-  local _naemon_templates=contacts,hosts,hostgroups,routers,servers,services
-  local _naemon_template_type=
-  local _path_naemon=/etc/naemon
-  local _path_927=/etc/927
-  local _tag=927.ops.start.manager
+  local _json_processes=$( ${cmd_osqueryi} "select pid from processes where name=='gearmand' and parent==1" --json )
+  local _path_gearmand=/etc/mod_gearman
+  local _tag=927.ops.start.jobserver
 
   # parse command arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -g | --group )
+      -j | --json )
         shift
-        _group="${1}"
+        _json="${1}"
       ;;
-
+      -s | --secrets )
+        shift
+        _json_secrets="${1}"
+      ;;
     esac
     shift
   done  
 
   # main
-  # delete /etc/naemon/conf.d if is directory. 972 ops uses a simlink 
-  >2& echo -----------------------
-  if  [[ -d ${_path_naemon}/conf.d ]] &&
-      [[ ! -L ${_path_naemon}/conf.d ]]; then
-    shell.log --screen --message "deleting directory ${_path_naemon}/conf.d" --tag ${_tag} --remote-server ${LOG_SERVER}
-    ${cmd_rm} -rf ${_path_naemon}/conf.d
-  fi
-  >2& echo -----------------------
+  if  [[ -d ${_path_gearmand} ]]; then
+    shell.log --screen --message "path ${_path_gearmand} exists" --tag ${_tag} --remote-server ${LOG_SERVER}
+>&2 test
 
-  # # fetch infrastructure.json and configuration.json from repo
-  # shell.log --screen --message "fetching configurations" --tag ${_tag} --remote-server ${LOG_SERVER}
-  # if  927.ops.config.fetch; then
-  #   shell.log --screen --message "configuration fetched" --tag ${_tag} --remote-server ${LOG_SERVER}
-  # else
-  #   shell.log --screen --message "configuration fetch had a problem" --tag ${_tag} --remote-server ${LOG_SERVER}
-  # fi
+    # create /etc/mod_gearman/module.conf
+    if 927.ops.create.mod_gearman-module --json ${_json_secrets}; then
+      shell.log --screen --message "gearman module.conf created successfully" --tag ${_tag} --remote-server ${LOG_SERVER}
+    else
+      shell.log --screen --message "gearman module.conf creation failed" --tag ${_tag} --remote-server ${LOG_SERVER}
+      (( _error_count++ ))
+    fi
+
+
+
+
+
+
+
+
+
+
+
+
 
   # compare candidate to running configurations
   if 927.ops.config.compare; then
@@ -132,12 +133,100 @@
     fi
   fi
 
-  if [[ $( ${cmd_osqueryi} "select pid from processes where name == 'naemon' and parent == 1" --json | ${cmd_jq} -c '. | length' ) == 0 ]]; then
-    shell.log --screen --message "linking ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d" --tag ${_tag} --remote-server ${LOG_SERVER}
-    [[ ! -L ${_path_naemon}/conf.d ]] && ${cmd_ln} --symbolic ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # create secrets path
+    if [[ ! -f ~gearmand/secrets ]]; then
+      if ${cmd_mkdir} --parents ~gearmand/secrets; then
+        shell.log --screen --message "~/gearmand/secrets created" --tag ${_tag} --remote-server ${LOG_SERVER}
+      else
+        shell.log --screen --message "~/gearmand/secrets creation failed" --tag ${_tag} --remote-server ${LOG_SERVER}
+      fi
+    fi
+
+    # crate ~gearmand/secrets/module.pwd
+    if [[ ! -f ~gearmand/secrets/module.pwd ]]; then
+      ${cmd_touch} ~gearmand/secrets/module.pwd  || (( _error_count++ ))
+      shell.log --screen --message "creating ~gearmand/secrets/module.pwd" --tag ${_tag} --remote-server ${LOG_SERVER}
+    fi
+
+    # set owner/group ~gearmand/secrets
+    if ${cmd_chown} -R gearmand:gearmand ~gearmand/secrets; then
+      shell.log --screen --message "set owner/group for ~gearmand/secrets successful" --tag ${_tag} --remote-server ${LOG_SERVER}
+    else
+      shell.log --screen --message "set owner/group for ~gearmand/secrets failed" --tag ${_tag} --remote-server ${LOG_SERVER}
+      (( _error_count++ ))
+    fi
+
+    # set mode ~gearmand/secrets
+    ${cmd_chmod} 600 -R ~gearmand/secrets  || (( _error_count++ ))
+
+    # write ~gearmand/secrets/module.pwd
+    if [[ -f ~gearmand/secrets/module.pwd ]]; then
+      if [[ $( ${cmd_echo} "${_json_secrets}" | "${cmd_jq}" -r '. | select( .key == "pass_service-account_jobserver" ).value' | to_sha256 ) == $( ${cmd_echo} ~gearmand/secrets/module.pwd | to_sha256 ) ]]; then
+        shell.log --screen --message "candidate module password matches" --tag ${_tag} --remote-server ${LOG_SERVER}
+        
+      else
+        shell.log --screen --message "candidate module password does not match" --tag ${_tag} --remote-server ${LOG_SERVER}
+        ${cmd_echo} "${_json_secrets}" | "${cmd_jq}" -r '. | select( .key == "pass_service-account_jobserver" ).value' > ~gearmand/secrets/module.pwd
+        _restart=${true}
+      fi
+    fi
+
+  # start/restart gearmand
+  if  [[ $( ${cmd_echo} ${_json_processes} | ${cmd_jq} '. | length' ) == 0 ]] ||
+      [[ $( ${cmd_echo} ${_json_processes} | ${cmd_jq} '. | length' ) -gt 1 ]]; then
     
-    shell.log --screen --message "starting naemon" --tag ${_tag} --remote-server ${LOG_SERVER}
-    ${cmd_su} naemon --shell=/bin/sh --preserve-environment "--command=${cmd_naemon} --daemon /etc/naemon/naemon.cfg"
+    # kill all
+    for pid in $( ${cmd_echo} ${_json_processes} | ${cmd_jq} -r '.[]' ); do
+      if ${cmd_kill} -s ${pid}; then
+        shell.log --screen --message "stopping gearmand(${pid}) successful" --tag ${_tag} --remote-server ${LOG_SERVER}
+      else
+        shell.log --screen --message "stopping gearmand(${pid}) failed" --tag ${_tag} --remote-server ${LOG_SERVER}
+        (( _error_count++ ))
+      fi
+    done
+    
+    # start
+    if ${cmd_su} gearmand --shell=/bin/sh --preserve-environment "--command=${cmd_gearmand} --daemon --log-file none --syslog $OPTIONS" >/dev/null 2>&1; then
+      shell.log --screen --message "starting gearmand successful" --tag ${_tag} --remote-server ${LOG_SERVER}
+    else
+      shell.log --screen --message "starting gearmand failed" --tag ${_tag} --remote-server ${LOG_SERVER}
+      (( _error_count++ ))
+    fi
+  
+  else
+    # restart
+    if ${cmd_kill} -HUP $( ${cmd_echo} ${_json_processes} | ${cmd_jq} -r '.[0].pid' ); then
+      shell.log --screen --message "restarting gearmand successful" --tag ${_tag} --remote-server ${LOG_SERVER}
+    else
+      shell.log --screen --message "restarting gearmand failed" --tag ${_tag} --remote-server ${LOG_SERVER}
+      (( _error_count++ ))
+    fi
+  fi
+
+  else
+    shell.log --screen --message "path ${_path_gearmand} does not exists" --tag ${_tag} --remote-server ${LOG_SERVER}
+    (( _error_count++ ))
   fi
 
   # exit

@@ -42,14 +42,14 @@
     shell.log --message "validating candidate config" --tag ${_tag} --remote-server ${LOG_SERVER}
     ${cmd_su} naemon --shell=/bin/sh --preserve-environment "--command=${cmd_naemon} --verify-config ${_path_naemon}/naemon.cfg" > ${_path_927}/var/log/naemon.log ${std_out} && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
-    # # return configuration to running
-    # shell.log --message "unlinking candidate config" --tag ${_tag} --remote-server ${LOG_SERVER}
-    # ${cmd_unlink} ${_path_naemon}/conf.d
+    # return configuration to running
+    shell.log --message "unlinking candidate config" --tag ${_tag} --remote-server ${LOG_SERVER}
+    ${cmd_unlink} ${_path_naemon}/conf.d
     
-    # if [[ -L  ${_path_927}${_path_naemon}/running ]]; then
-    #   shell.log --message "linking running config" --tag ${_tag} --remote-server ${LOG_SERVER}
-    #   ${cmd_ln} --symbolic ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d
-    # fi
+    if [[ -L  ${_path_927}${_path_naemon}/running ]]; then
+      shell.log --message "linking running config" --tag ${_tag} --remote-server ${LOG_SERVER}
+      ${cmd_ln} -s ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d
+    fi
 
   else
     shell.log --message "no candidate config available" --tag ${_tag} --remote-server ${LOG_SERVER}

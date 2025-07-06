@@ -38,7 +38,7 @@
 
     # make output path
     [[ ! -d ${_path_927}${_path_naemon}/candidate ]] && ${cmd_mkdir} -p ${_path_927}${_path_naemon}/candidate || (( _err_count++ ))
-    [[ ! -d ${_path_927}${_path_naemon}/running ]]   && ${cmd_mkdir} -p ${_path_927}${_path_naemon}/running   || (( _err_count++ ))
+    # [[ ! -d ${_path_927}${_path_naemon}/running ]]   && ${cmd_mkdir} -p ${_path_927}${_path_naemon}/running   || (( _err_count++ ))
 
     # get file hashes
     shell.log --message "comparing candidate to running configs" --tag ${_tag} --remote-server ${LOG_SERVER}
