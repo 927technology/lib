@@ -45,13 +45,11 @@
 
   # main
   # delete /etc/naemon/conf.d if is directory. 972 ops uses a simlink 
-  >2& echo -----------------------
   if  [[ -d ${_path_naemon}/conf.d ]] &&
       [[ ! -L ${_path_naemon}/conf.d ]]; then
     shell.log --screen --message "deleting directory ${_path_naemon}/conf.d" --tag ${_tag} --remote-server ${LOG_SERVER}
     ${cmd_rm} -rf ${_path_naemon}/conf.d
   fi
-  >2& echo -----------------------
 
   # # fetch infrastructure.json and configuration.json from repo
   # shell.log --screen --message "fetching configurations" --tag ${_tag} --remote-server ${LOG_SERVER}
