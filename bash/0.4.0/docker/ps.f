@@ -1,5 +1,7 @@
 docker.ps () {
   # description
+  # outputs running docker instances on host as json
+  # accepts 0 arguments
 
   # local variables
   local _count=0
