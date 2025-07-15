@@ -1,5 +1,6 @@
 function git.branch {
-  # accepts  1 arg repo name, returns string branch name.
+  # Description repo name, returns string branch name.
+  # accepts  1 arg.
 
   # depends on
   ## 0.4.x/git/branch.f
