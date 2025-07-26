@@ -17,17 +17,19 @@ IFS=$'\n'
 _json_ai=
 _json_oci=
 
-# _lib_root=/home/bryan/Desktop/git/lib/bash/0.4.0
-_lib_root=~/git/lib/bash/0.4.0
+_lib_root=/home/bryan/Desktop/git/lib/bash/0.4.0
+# _lib_root=~/git/lib/bash/0.4.0
 
-_profile=ops-ms
-# _profile=DEFAULT
+# _profile=ops-ms
+_profile=DEFAULT
 
 success=${false}
 _url=https://927technology.github.io/ops
 
+
 # argument variables
 _tenancy=cmurray
+_tenancy_id=ocid1.tenancy.oc1..aaaaaaaa4k7ux473pugxgzjasoae2ej2ya3kdvemxnuveimz4qfo3orssmeq
 _tenant=927
 
 # libraries
@@ -39,10 +41,15 @@ _tenant=927
 # parse arguments
 while [[ ${1} != "" ]]; do
   case ${1} in
+    -i | --id )
+      shift
+      _tenancy_id=${1}
+    ;;
     -t | --tenant )
       shift
       _tenant=${1}
-    ;;-T | --tenancy )
+    ;;
+    -T | --tenancy )
       shift
       _tenancy=${1}
     ;;
@@ -55,7 +62,7 @@ done
 _json_ai=$(curl -s ${_url}/infrastructure.json | jq -c '.hosts.clouds[] | select(.name=="'${_tenancy}'").tennants[] | select(.name=="'${_tenancy}'/'${_tenant}'").iac[0].compartments')
 # _json_ai=$(curl -s Https://927technology.github.io/ops/infrastructure.json | jq -c '.hosts.clouds[] | select(.name=="cmurray").tennants[] | select(.name=="cmurray/927").iac[0].compartments')
 
-_json_oci=$(oci.iam.compartment.list --profile ${_profile} --id ocid1.tenancy.oc1..aaaaaaaa4k7ux473pugxgzjasoae2ej2ya3kdvemxnuveimz4qfo3orssmeq)
+_json_oci=$(oci.iam.compartment.list --profile ${_profile} --id ${_tenancy_id})
 # _json_oci=$(oci.iam.compartment.list --profile DEFAULT --id ocid1.tenancy.oc1..aaaaaaaa4k7ux473pugxgzjasoae2ej2ya3kdvemxnuveimz4qfo3orssmeq)
 
 # echo ----ai----------
@@ -104,10 +111,6 @@ for compartment_ai in $(echo ${_json_ai} | jq -c '.[]') ; do
     name_oci=$(echo ${compartment_oci} | jq -r '.name')
     description_oci=$(echo ${compartment_oci} | jq -r '.description')
     label_oci=$(echo ${compartment_oci} | jq -r '."defined-tags"."927-ops".label')
-
-    # new check for tenant name
-    tenant_oci=$(echo ${compartment_oci} | jq -r '."defined-tags"."927-ops".tenant')
-
 
     # echo name_oci: ${name_oci}
     # echo
