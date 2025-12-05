@@ -1,5 +1,8 @@
 docker.volumes () {
-  # description
+  # description outputting a list of volumes within /usr/bin/docker 
+  # in json format  using the slurp and compact options
+
+  # accepts zero arguments
 
   # local variables
   local _count=0

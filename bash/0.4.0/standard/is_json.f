@@ -10,10 +10,10 @@ is_json() {
     ${cmd_echo} "${_data}" | ${cmd_jq} > /dev/null 2>&1
     if [[ ${?} == ${exit_ok} ]]; then
       _exit_code=${exit_ok}
-      _exit_string=${true}
+      _exit_string=${_data}
     else  
-      _exit_code=${exit_ok}
-      _exit_string=${false}
+      _exit_code=${exit_crit}
+      _exit_string=
     fi
   done
 

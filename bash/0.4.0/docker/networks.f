@@ -1,5 +1,7 @@
 docker.networks () {
   # description
+  # output the docker networks in json format
+  # accepts 0 arguments
 
   # local variables
   local _count=0
@@ -16,6 +18,8 @@ docker.networks () {
   # main
   _json=$( ${cmd_docker} network ls --format='{{json .}}' | ${cmd_jq} -sc )
   [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+
+  _exit_string=${_json}
 
   # exit
   ${cmd_echo} ${_exit_string}

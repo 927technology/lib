@@ -1,0 +1,13 @@
+. ${_lib_root}/927/naemon/create/clouds.f
+. ${_lib_root}/927/naemon/create/commands.f
+. ${_lib_root}/927/naemon/create/contactgroups.f
+. ${_lib_root}/927/naemon/create/contacts.f
+. ${_lib_root}/927/naemon/create/hostgroups.f
+. ${_lib_root}/927/naemon/create/hosts.f
+. ${_lib_root}/927/naemon/create/routers.f
+. ${_lib_root}/927/naemon/create/servers.f
+. ${_lib_root}/927/naemon/create/servicedependencies.f
+. ${_lib_root}/927/naemon/create/serviceescalations.f
+. ${_lib_root}/927/naemon/create/servicegroups.f
+. ${_lib_root}/927/naemon/create/services.f
+. ${_lib_root}/927/naemon/create/timeperiods.f
