@@ -3,12 +3,10 @@
   # 
 
   # dependancies
-  # 927.bools.v
-  # 927/cmd_<platform>.v
-  # 927/nagios.v
   # 927/secretservice.l
-  # shell.l
   # json/validate.f 
+  # shell.l
+  # variables.l
 
   # argument variables
   # none
@@ -18,11 +16,11 @@
   local _exit_code=${exit_unkn}
   local _exit_string=
 
-
   # local variables
   local _count_role_secrets=0
   local _json_secrets=
   local _json_role_secrets=
+  local _naemon_command="${cmd_naemon} --daemon /etc/naemon/naemon.cfg"
   local _naemon_configurations=contacts,contactgroups,commands,hostgroups,services,timeperiods
   local _naemon_infrastructures=hosts/clouds,hosts/clouds/tenants
   local _naemon_templates=contacts,hosts,hostgroups,routers,servers,services
@@ -47,30 +45,24 @@
   # delete /etc/naemon/conf.d if is directory. 972 ops uses a simlink 
   if  [[ -d ${_path_naemon}/conf.d ]] &&
       [[ ! -L ${_path_naemon}/conf.d ]]; then
-    shell.log --screen --message "deleting directory ${_path_naemon}/conf.d" --tag ${_tag} --remote-server ${LOG_SERVER}
-    ${cmd_rm} -rf ${_path_naemon}/conf.d
+    if ${cmd_rm} -rf ${_path_naemon}/conf.d; then
+      shell.log --screen --message "DELETE: ${_path_naemon}/conf.d SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
+    else
+      shell.log --screen --message "DELETE: ${_path_naemon}/conf.d FAILED" --tag ${_tag} --remote-server ${LOG_SERVER}
+    fi
   fi
-
-  # # fetch infrastructure.json and configuration.json from repo
-  # shell.log --screen --message "fetching configurations" --tag ${_tag} --remote-server ${LOG_SERVER}
-  # if  927.ops.config.fetch; then
-  #   shell.log --screen --message "configuration fetched" --tag ${_tag} --remote-server ${LOG_SERVER}
-  # else
-  #   shell.log --screen --message "configuration fetch had a problem" --tag ${_tag} --remote-server ${LOG_SERVER}
-  # fi
 
   # compare candidate to running configurations
   if 927.ops.config.compare; then
-    shell.log --screen --message "configurations match" --tag ${_tag} --remote-server ${LOG_SERVER}
+    shell.log --screen --message "VALIDATE: configurations SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
   else
-    shell.log --screen --message "configurations do not match" --tag ${_tag} --remote-server ${LOG_SERVER}
+    shell.log --screen --message "VALIDATE: configurations FAILED" --tag ${_tag} --remote-server ${LOG_SERVER}
 
     # create ${_path_927}${_path_naemon}/candidate/conf.d
-    if [[ ! -d ${_path_927}${_path_naemon}/candidate/conf.d ]]; then
-      shell.log --screen --message "creating ${_path_927}${_path_naemon}/candidate/conf.d" --tag ${_tag} --remote-server ${LOG_SERVER}
-      ${cmd_mkdir} --parents ${_path_927}${_path_naemon}/candidate/conf.d
-    fi
-
+    shell.create.directory --directory ${_path_927}${_path_naemon}/candidate/conf.d --group naemon --mode 770 --owner naemon 
+    # set owner:group and mode for ${_path_927}
+    shell.create.directory --directory ${_path_927} --group naemon --mode 770 --owner naemon --recursive
+ 
     # parse configuration -> ${_path_927}${_path_naemon}/candidate/conf.d
     for naemon_configuration in $( ${cmd_echo} ${_naemon_configurations} | ${cmd_sed} 's/,/\n/g' ); do
       # zero out loop variables
@@ -78,8 +70,7 @@
 
       shell.log --screen --message "parsing ${naemon_configuration}" --tag ${_tag} --remote-server ${LOG_SERVER}
       _json=$( ${cmd_cat} ${_path_927}${_path_naemon}/candidate/configuration.json | ${cmd_jq} -c '.'${naemon_configuration} )
-      927.ops.create.${naemon_configuration} --json "${_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/${naemon_configuration}
-      [[ ${?} != ${exit_ok} ]] && (( _error_count++ )) 
+      927.ops.create.${naemon_configuration} --json "${_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/${naemon_configuration} || (( _error_count++ )) 
     done
 
     # parse templates -> ${_path_927}${_path_naemon}/candidate/conf.d/templates
@@ -90,15 +81,13 @@
 
       shell.log --screen --message "parsing template ${naemon_template}" --tag ${_tag} --remote-server ${LOG_SERVER}
       _json=$( ${cmd_cat} ${_path_927}${_path_naemon}/candidate/configuration.json | ${cmd_jq} -c '.templates.'${naemon_template} )
-      927.ops.create.${naemon_template} --json "${_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/templates/${naemon_template} --template
-      [[ ${?} != ${exit_ok} ]] && (( _error_count++ )) 
+      927.ops.create.${naemon_template} --json "${_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/templates/${naemon_template} --template || (( _error_count++ )) 
     done
 
     # hosts/clouds
     shell.log --screen --message "hosts/clouds" --tag ${_tag} --remote-server ${LOG_SERVER}
     _json=$( ${cmd_cat} ${_path_927}${_path_naemon}/candidate/infrastructure.json | ${cmd_jq} -c '.hosts.clouds' )
-    927.ops.create.hosts --json "${_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/hosts/clouds -T
-    [[ ${?} != ${exit_ok} ]] && (( _error_count++ )) 
+    927.ops.create.hosts --json "${_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/hosts/clouds -T || (( _error_count++ )) 
 
     # hosts/clouds/tennants
     shell.log --screen --message "hosts/clouds/tennants" --tag ${_tag} --remote-server ${LOG_SERVER}
@@ -106,36 +95,48 @@
       _tenancy_label=$( ${cmd_echo} ${cloud_json} | ${cmd_jq} -r '.ops[0].name.string')
       
       for tennant_json in $( ${cmd_echo} "${cloud_json}" | ${cmd_jq} -c '.tennants' ); do
-        927.ops.create.hosts --json "${tennant_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/hosts/clouds/tennants --tenancy ${_tenancy_label}
-        [[ ${?} != ${exit_ok} ]] && (( _error_count++ )) 
+        927.ops.create.hosts --json "${tennant_json}" --path ${_path_927}${_path_naemon}/candidate/conf.d/hosts/clouds/tennants --tenancy ${_tenancy_label} || (( _error_count++ )) 
       done
     done
 
     # validate naemon configuration
     if 927.ops.config.validate; then
-      shell.log --screen --message "unlinking running config" --tag ${_tag} --remote-server ${LOG_SERVER}
-      [[ -L ${_path_927}${_path_naemon}/running ]] && ${cmd_unlink} ${_path_927}${_path_naemon}/running
+      if [[ -L ${_path_927}${_path_naemon}/running ]] && ${cmd_unlink} ${_path_927}${_path_naemon}/running; then
+        shell.log --screen --message "UNLINKING: ${_path_927}${_path_naemon}/running SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
+      else  
+        shell.log --screen --message "UNLINKING: ${_path_927}${_path_naemon}/running FAILURE" --tag ${_tag} --remote-server ${LOG_SERVER}
+      fi
 
       shell.log --screen --message "linking running config" --tag ${_tag} --remote-server ${LOG_SERVER}
       ${cmd_ln} --symbolic $( ${cmd_readlink} ${_path_927}${_path_naemon}/candidate ) ${_path_927}${_path_naemon}/running
     
-      shell.log --screen --message "linking naemon conf.d" --tag ${_tag} --remote-server ${LOG_SERVER}
-      ${cmd_ln} --symbolic ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d
+      if ${cmd_ln} --symbolic ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d; then
+        shell.log --screen --message "LINKING ${_path_927}${_path_naemon}/running/conf.d -> /etc/naemon/conf.d SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
+      else
+        shell.log --screen --message "LINKING ${_path_927}${_path_naemon}/running/conf.d -> /etc/naemon/conf.d FAILED" --tag ${_tag} --remote-server ${LOG_SERVER}
+      fi 
 
-      if [[ $( ${cmd_osqueryi} "select pid from processes where name == 'naemon' and parent == 1" --json | ${cmd_jq} -c '. | length' ) -gt 0 ]]; then
-        shell.log --screen --message "restarting naemon"
-        _pid=$( ${cmd_osqueryi} "select pid from processes where name == 'naemon' and parent == 1" --json | ${cmd_jq} -r '.[0].pid' )
-        ${cmd_kill} -HUP ${_pid}
-      fi
+      # restart naemon
+      shell.process.restart --process naemon
+
+      # if [[ $( ${cmd_osqueryi} "select pid from processes where name == 'naemon' and parent == 1" --json | ${cmd_jq} -c '. | length' ) -gt 0 ]]; then
+      #   shell.log --screen --message "RESTARTING naemon"
+      #   _pid=$( ${cmd_osqueryi} "select pid from processes where name == 'naemon' and parent == 1" --json | ${cmd_jq} -r '.[0].pid' )
+      #   ${cmd_kill} -HUP ${_pid}
+      # fi
     fi
   fi
 
   if [[ $( ${cmd_osqueryi} "select pid from processes where name == 'naemon' and parent == 1" --json | ${cmd_jq} -c '. | length' ) == 0 ]]; then
-    shell.log --screen --message "linking ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d" --tag ${_tag} --remote-server ${LOG_SERVER}
-    [[ ! -L ${_path_naemon}/conf.d ]] && ${cmd_ln} --symbolic ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d
+    if [[ ! -L ${_path_naemon}/conf.d ]] && ${cmd_ln} --symbolic ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d; then
+      shell.log --screen --message "LINKING: ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
+    else
+      shell.log --screen --message "LINKING: ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d FAILED" --tag ${_tag} --remote-server ${LOG_SERVER}
+    fi
     
-    shell.log --screen --message "starting naemon" --tag ${_tag} --remote-server ${LOG_SERVER}
-    ${cmd_su} naemon --shell=/bin/bash --preserve-environment "--command=${cmd_naemon} --daemon /etc/naemon/naemon.cfg"
+    # shell.log --screen --message "starting naemon" --tag ${_tag} --remote-server ${LOG_SERVER}
+    shell.process.start --command "${_naemon_command}"- -preserve-environment --user naemon || (( _error_count++ ))
+    # ${cmd_su} naemon --shell=/bin/sh --preserve-environment "--command=${cmd_naemon} --daemon /etc/naemon/naemon.cfg"
   fi
 
   # exit

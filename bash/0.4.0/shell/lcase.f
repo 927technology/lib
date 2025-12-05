@@ -22,7 +22,7 @@ shell.lcase () {
   # main
   if  [[ ! -z ${_string} ]]; then  
     # set exit string to lcase
-    _exit_string=$( ${cmd_echo} ${_string} | ${cmd_awk} -F"|" '{print tolower($1)}' )
+    _exit_string=$( ${cmd_echo} ${_string,,} )
 
     # set exit code
     [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
