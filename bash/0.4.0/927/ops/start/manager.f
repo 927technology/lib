@@ -135,7 +135,7 @@
     [[ ! -L ${_path_naemon}/conf.d ]] && ${cmd_ln} --symbolic ${_path_927}${_path_naemon}/running/conf.d ${_path_naemon}/conf.d
     
     shell.log --screen --message "starting naemon" --tag ${_tag} --remote-server ${LOG_SERVER}
-    ${cmd_su} naemon --shell=/bin/sh --preserve-environment "--command=${cmd_naemon} --daemon /etc/naemon/naemon.cfg"
+    ${cmd_su} naemon --shell=/bin/bash --preserve-environment "--command=${cmd_naemon} --daemon /etc/naemon/naemon.cfg"
   fi
 
   # exit

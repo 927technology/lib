@@ -7,16 +7,23 @@ is_integer() {
   local _exit_string=
 
   while read -r _data; do
-    case ${_data} in
-      ''|*[!0-9]*) 
-        _exit_string=${false}
-        _exit_code=${exit_ok}
-      ;;
-      *) 
-        _exit_string=${true}
-        _exit_code=${exit_ok} 
-      ;;
-    esac
+    if [[ -z "${_data}" ]]; then
+      _exit_string=
+      _exit_code=${exit_crit}
+
+    elif [ "${_data}" -ge 0 2>/dev/null ]; then
+      _exit_string=${_data}
+      _exit_code=${exit_ok}
+
+    elif [ "${_data}" -lt 0 2>/dev/null ]; then
+      _exit_string=${_data}
+      _exit_code=${exit_ok}
+      
+    else
+      _exit_string=
+      _exit_code=${exit_crit} 
+
+    fi
   done
 
   # exit

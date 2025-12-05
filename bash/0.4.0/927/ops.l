@@ -25,6 +25,7 @@
 # . ${_lib_root}/927/ops/secretservice/git/${SECRET_PROVIDER}/secretservice.f
 . ${_lib_root}/927/ops/start/manager.f
 . ${_lib_root}/927/ops/start/jobserver.f
+. ${_lib_root}/927/ops/start/jobworker.f
 . ${_lib_root}/927/ops/start/web.f
 # . ${_lib_root}/927/ops/create/workerserver.f
 # . ${_lib_root}/927/ops/running/get.f

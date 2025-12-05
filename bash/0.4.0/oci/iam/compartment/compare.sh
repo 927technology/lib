@@ -17,11 +17,11 @@ IFS=$'\n'
 _json_ai=
 _json_oci=
 
-_lib_root=/home/bryan/Desktop/git/lib/bash/0.4.0
-# _lib_root=~/git/lib/bash/0.4.0
+# _lib_root=/home/bryan/Desktop/git/lib/bash/0.4.0
+_lib_root=~/git/lib/bash/0.4.0
 
-# _profile=ops-ms
-_profile=DEFAULT
+_profile=ops-ms
+# $_profile=DEFAULT
 
 success=${false}
 _url=https://927technology.github.io/ops
@@ -130,8 +130,11 @@ for compartment_ai in $(echo ${_json_ai} | jq -c '.[]') ; do
     # while TF will concatinate them in .defined-tags.927-ops.label
     if  [[ ${_tenant}/${label_ai} == ${label_oci} ]]; then
       success=${true}
+    else
+      success=${false}
     fi
-
+    # echo ${_json_ai} | jq -r '.[] | select(.label == "'${label_oci}'")'
+    echo ${_json_ai} | jq '.[].label'
 
   done
 

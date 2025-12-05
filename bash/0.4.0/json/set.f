@@ -31,13 +31,12 @@ json.set() {
   done
 
   # main
-  case $( ${cmd_echo} "${_value}" | is_integer ) in
-    ${true} )
+  case $( ${cmd_echo} "${_value}" | is_integer >/dev/null 2>&1; ${cmd_echo} ${?} ) in
+    ${exit_ok} )
       _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'     |= '${_value} )
       [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
-
     ;;
-    ${false} )
+    * )
       if    [[ -z ${_value} ]]; then
         _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= null' )
       
@@ -54,10 +53,11 @@ json.set() {
         _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= "'"${_value}"'"' )
       
       fi
-      [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
     ;;
   esac
+
+  [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
   # exit
   ${cmd_echo} ${_json}
