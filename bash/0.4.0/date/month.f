@@ -1,20 +1,23 @@
 date.month() {
-  # description
-  # accepts no args.  returns month
-  
-  # local variables
-  # none
+	# description
+	# accepts no args.  returns date of month
+	
+	# local variables
+	# none
 
   # control variables
-  local _exit_code=${exit_unkn}
+	local _exit_code=${exit_unkn}
   local _exit_string=
 
-  # parse arguments
-  # none
+	# parse arguments
+	# none
 
-  # main
-  _exit_string=$( ${cmd_date} +'%m' )
-  [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+	# main
+	case $( ${cmd_uname} -s ) in
+    Darwin  ) _exit_string=$( ${cmd_date} -j +'%m' )                        ;;
+    Linux   ) _exit_string=$( ${cmd_date}    +'%m' )                        ;;
+  esac
+	[[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
   # exit
   ${cmd_echo} ${_exit_string}

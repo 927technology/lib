@@ -1,5 +1,10 @@
 proxmox.json.vm() {
   # dependancies
+  # jq
+
+  # libraries
+  # json
+  # shell
 
   # local variables
   local _json="{}"
@@ -22,10 +27,11 @@ proxmox.json.vm() {
   # parse arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -a | --args )
-        shift
-        _args="${1}"
-      ;;        
+      # -a | --args )
+      #   shift
+      #   _args="${1}"
+      #   echo "$_args"
+      # ;;        
       -c | --cores )
         shift
         _cores="${1}"
@@ -42,9 +48,9 @@ proxmox.json.vm() {
         shift
         _name="${1}"
       ;;      
-      -N | --network )
+      -N0 | --net0 )
         shift
-        _network="${1}"
+        _network0="${1}"
       ;;
       -os  | --os-type )
         shift
@@ -86,17 +92,17 @@ proxmox.json.vm() {
   _json=$( json.set --json ${_json} --key .memory   --value ${_memory}  )
   _json=$( json.set --json ${_json} --key .node     --value vmh-01  )
   _json=$( json.set --json ${_json} --key .cores    --value ${_cores}   )
-  _json=$( json.set --json ${_json} --key .storage  --value ${_storage} )
-  _json=$( json.set --json ${_json} --key .net0     --value ${_network} )
-  _json=$( json.set --json ${_json} --key .cdrom    --value ${_cd_rom}  )
-  _json=$( json.set --json ${_json} --key .scsi0    --value ${_scsi0}  )
-  _json=$( json.set --json ${_json} --key .args    --value "${_args}"  )
+  # _json=$( json.set --json ${_json} --key .storage  --value ${_storage} )
+  # _json=$( json.set --json ${_json} --key .net0     --value ${_network0} )
+  # _json=$( json.set --json ${_json} --key .cdrom    --value ${_cd_rom}  )
+  # _json=$( json.set --json ${_json} --key .scsi0    --value ${_scsi0}  )
+  # _json=$( json.set --json ${_json} --key .args    --value "${_args}"  )
 
   ${cmd_echo} ${_json} | is_json >/dev/null 2>&1 || (( _error_count++ ))
 
   # exit
   [[ ${_error_count} != 0 ]] && _exit_code=${exit_crit} || _exit_code=${exit_ok}
-  ${cmd_echo} ${_json} | ${cmd_jq} -c
+  shell.print ${_json} | ${cmd_jq} -c
   return ${_exit_code}
 }
 

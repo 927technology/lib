@@ -1,0 +1,83 @@
+coriolis.get.endpoints.options() {
+  # edited
+  # chris murray
+  # 20251120
+
+  # description
+  # queries coriolis endpoints set in connect.json for ${_profile}
+  # deletes existing cache and writes output to ${_path}/${_profile}/endpoints/options as json -c format
+
+  # local variables
+  local _count_name=0
+  local _id=
+  local _json=
+  local _name=
+  local _path=~move/coriolis
+
+  # argument variables
+  local _profile=
+
+  # control variables
+  local _error_count=0
+  local _exit_code=${exit_unkn}
+  local _exit_string=
+
+  # parse arguments
+  while [[ ${1} != "" ]]; do
+    case ${1} in
+      -p  | --profile | -n | --name )
+        shift
+        _profile="${1}"
+      ;;
+    esac
+    shift
+  done
+
+  # main
+  # set credentials
+  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+
+  # clear cached data
+  [[ -d ${_path}/${_profile}/endpoints/options ]] && ${cmd_rm} -rf ${_path}/${_profile}/endpoints/options
+  ${cmd_mkdir} -p ${_path}/${_profile}/endpoints/options
+
+
+  for endpoint in $( move.coriolis.list.active --output name || (( _error_count++ )) ); do
+    # zero out loop data
+    _json=
+    _id=$( move.coriolis.list.endpoints --name ${endpoint} --output id || (( _error_count++ )) )
+    _name=${endpoint}
+
+    # set endpoint
+    move.coriolis.set.endpoint --name ${endpoint} || (( _error_count++ ))
+    
+    for direction in destination source; do
+      ${cmd_mkdir} -p ${_path}/${_profile}/endpoints/options/${direction}
+
+      for option in $( ${cmd_coriolis} endpoint ${direction} options list -f json ${endpoint} 2>/dev/null | ${cmd_jq} '{"'"${direction}"'": ., "endpoint":"'"${endpoint}"'", "source": [] }' | ${cmd_jq} -c ); do
+        shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] Direction: ${direction}, End Point: ${_name}"
+        
+        # output json
+        ${cmd_echo} "${option}" > ${_path}/${_profile}/endpoints/options/${direction}/${_id}.json || (( _error_count++ ))
+
+        ${cmd_ln} -fs ${_id}.json ${_path}/${_profile}/endpoints/options/${direction}/${_name} || (( _error_count++ ))
+      
+      done
+    done
+  done
+    
+  # set exit code
+  if [[ ${_error_count} == 0 ]]; then
+    _exit_code=${exit_ok}
+      shell.log "${FUNCNAME}(${_profile}) - [COMPLETE]"
+  
+  else  
+    _exit_code=${exit_crit}
+      shell.log "${FUNCNAME}(${_profile}) - [FAILED]"
+
+  fi
+
+  # exit
+  [[ ${_error_count} != 0 ]] && _exit_code=${exit_crit} || _exit_code=${exit_crit}
+  return ${_exit_code}
+}

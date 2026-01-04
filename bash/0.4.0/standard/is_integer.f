@@ -1,3 +1,4 @@
+
 is_integer() {
   # local variables
   # none
@@ -7,21 +8,13 @@ is_integer() {
   local _exit_string=
 
   while read -r _data; do
-    if [[ -z "${_data}" ]]; then
-      _exit_string=
-      _exit_code=${exit_crit}
+    if  [ ${_data} -ge 0 2>/dev/null ] || \
+        [ ${_data} -le 0 2>/dev/null ]; then
 
-    elif [ "${_data}" -ge 0 2>/dev/null ]; then
-      _exit_string=${_data}
-      _exit_code=${exit_ok}
-
-    elif [ "${_data}" -lt 0 2>/dev/null ]; then
-      _exit_string=${_data}
-      _exit_code=${exit_ok}
-      
+        _exit_string=${_data}
+        _exit_code=${exit_ok}
     else
-      _exit_string=
-      _exit_code=${exit_crit} 
+        _exit_code=${exit_crit} 
 
     fi
   done

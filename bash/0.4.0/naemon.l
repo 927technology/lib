@@ -1,10 +1,4 @@
-. ${_lib_root}/naemon/create/commands.f
-. ${_lib_root}/naemon/create/contactgroups.f
-. ${_lib_root}/naemon/create/contacts.f
-. ${_lib_root}/naemon/create/hostgroups.f
-. ${_lib_root}/naemon/create/hosts.f
-. ${_lib_root}/naemon/create/servicedependencies.f
-. ${_lib_root}/naemon/create/serviceescalations.f
-. ${_lib_root}/naemon/create/servicegroups.f
-. ${_lib_root}/naemon/create/services.f
-. ${_lib_root}/naemon/create/timeperiods.f
+. ${_lib_root}/naemon/livestatus/get/service_state.f
+. ${_lib_root}/naemon/livestatus/count/service/nonzero.f
+
+. ${_lib_root}/naemon/restart.f

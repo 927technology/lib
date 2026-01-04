@@ -3,6 +3,7 @@
 . ${_lib_root}/shell/is_bash.f
 . ${_lib_root}/shell/lcase.f
 . ${_lib_root}/shell/log.f
+. ${_lib_root}/shell/print.f
 . ${_lib_root}/shell/ucase.f
 
 . ${_lib_root}/shell_create.l

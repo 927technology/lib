@@ -44,6 +44,7 @@ snmp.set.apc9211 () {
           on  ) _state=1 ;;
           off ) _state=2 ;;
         esac
+
       ;;
     esac
     shift

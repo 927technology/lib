@@ -29,35 +29,34 @@ json.set() {
     esac
     shift
   done
-
+  
   # main
-  case $( ${cmd_echo} "${_value}" | is_integer >/dev/null 2>&1; ${cmd_echo} ${?} ) in
-    ${exit_ok} )
-      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'     |= '${_value} )
-      [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
-    ;;
-    * )
-      if    [[ -z ${_value} ]]; then
-        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= null' )
-      
-      elif  [[ $( ${cmd_echo} ${_value} | is_json ) == ${true} ]]; then
-        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= '${_value} )
-
-      elif  [[ ${_value} == {} ]]; then
-        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= {}' )
+  if    [[ -z ${_value} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= null' )
+    _exit_code=${exit_ok}
+    
+  elif  [[ ${_value} == {} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= {}' )
+    _exit_code=${exit_ok}
  
-      elif  [[ ${_value} == [] ]]; then
-        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= []' )
+  elif  [[ ${_value} == [] ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= []' )
+    _exit_code=${exit_ok}
 
-      else
-        _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= "'"${_value}"'"' )
-      
-      fi
+  elif  [[ $( ${cmd_echo} "${_value}" | is_integer >/dev/null 2>&1; ${cmd_echo} ${?} ) == ${exit_ok} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'     |= '${_value} )
+    _exit_code=${exit_ok}
 
-    ;;
-  esac
+  elif  [[ $( ${cmd_echo} "${_value}" | is_string >/dev/null 2>&1; ${cmd_echo} ${?} ) == ${exit_ok} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'     |= "'"${_value}"'"' )
+    _exit_code=${exit_ok}
 
-  [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+  else
+    _exit_code=${exit_crit}
+
+  fi
+
+  [[ ${?} != ${exit_ok} ]] && _exit_code=${exit_crit} || _exit_code=${exit_ok}
 
   # exit
   ${cmd_echo} ${_json}

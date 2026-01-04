@@ -1,9 +1,13 @@
-proxmox.create.api() {
+proxmox.create.vm() {
   # dependancies
+  # curl
+
+  # libraries
+  # shell
 
   # local variables
   local _api_key_name=api
-  # local _api_key_value=c7d9f2a8-ce86-4ae1-a51b-f187efe43db2 # svc_api
+  # local _api_key_value=c # svc_api
   local _api_key_value=b48aae82-7ca7-4c3b-9763-bcd1df3ec065 # root
   # local _api_user=svc_api
   local _api_user=root
@@ -22,73 +26,87 @@ proxmox.create.api() {
   local _exit_string=
 
   # parse arguments
-  # while [[ ${1} != "" ]]; do
-  #   case ${1} in
-  #     -akn  | --api-key-name )
-  #       shift
-  #       _api_key_name=$( ${cmd_echo} "${1}" | lcase )
-  #     ;;
-  #     -akv  | --api-key-value )
-  #       shift
-  #       _api_key_value=$( ${cmd_echo} "${1}" | lcase )
-  #     ;;
-  #     -au  | --api-user )
-  #       shift
-  #       _api_user=$( ${cmd_echo} "${1}" | lcase )
-  #     ;;
-  #     -aur  | --api-user-realm )
-  #       shift
-  #       _api_user_realm=$( ${cmd_echo} "${1}" | lcase )
-  #     ;;
-  #     -h  | --host )
-  #       shift
-  #       _host=$( ${cmd_echo} "${1}" | lcase )
-  #     ;;
-  #     -hp  | --host-port )
-  #       shift
-  #       _host_port=$( ${cmd_echo} "${1}" )
-  #     ;;
-  #     -n | --node )
-  #       shift
-  #       _node=$( ${cmd_echo} "${1}" | lcase )
-  #     ;;
-  #     -p  | --path )
-  #       shift
-  #       _path_input=$( ${cmd_echo} "${1}" | lcase )
-  #     ;;
-  #   esac
-  #   shift
-  # done
+  while [[ ${1} != "" ]]; do
+    case ${1} in
+      -akn  | --api-key-name )
+        shift
+        _api_key_name=$( ${cmd_echo} "${1}" | lcase )
+      ;;
+      -akv  | --api-key-value )
+        shift
+        _api_key_value=$( ${cmd_echo} "${1}" | lcase )
+      ;;
+      -au  | --api-user )
+        shift
+        _api_user=$( ${cmd_echo} "${1}" | lcase )
+      ;;
+      -aur  | --api-user-realm )
+        shift
+        _api_user_realm=$( ${cmd_echo} "${1}" | lcase )
+      ;;
+      -h  | --host )
+        shift
+        _host=$( ${cmd_echo} "${1}" | lcase )
+      ;;
+      -hp  | --host-port )
+        shift
+        _host_port=$( ${cmd_echo} "${1}" )
+      ;;
+      -n | --node )
+        shift
+        _node=$( ${cmd_echo} "${1}" | lcase )
+      ;;
+      -p  | --path )
+        shift
+        _path_input=$( ${cmd_echo} "${1}" | lcase )
+      ;;
+    esac
+    shift
+  done
 
   # control variables
   # none
 
   # main
-  _vm=$(                                                                                              \
-    proxmox.json.vm                                                                                   \
-      --name    testvm                                                                                \
-      --os-type linux                                                                                 \
-      --memory  1024                                                                                  \
-      --cores   1                                                                                     \
-      --storage local                                                                                 \
-      --network "virtio,bridge=vmbr0,tag=100"                                                                 \
-      --cd-rom "local:iso/Rocky-9.5-x86_64-minimal.iso"       \
-      --scsi0 "local-lvm:32" \
-      --args "vmlinuz initrd=initrd.img inst.stage2=hd:LABEL=Rocky-9-5-x86-64-dvd rd.live.check quiet inst.ks=https://raw.githubusercontent.com/927technology/kickstart/main/distro/el/minimal.ks"
+  # if  [[ ! -z ${_api_key_name}    ]] && \
+  #     [[ ! -z ${_api_key_value}   ]] && \
+  #     [[ ! -z ${_api_user}        ]] && \
+  #     [[ ! -z ${_api_user_realm}  ]] && \
+  #     [[ ! -z ${_host}            ]] && \
+  #     [[ ! -z ${_host_port}       ]] && \
+  #     [[ ! -z ${_json}            ]] && \
+  #     [[ ! -z ${_node}            ]] && \
+  #     [[ ! -z ${_path}            ]] && \
+  #     [[ ! -z ${_path_input}      ]] && \
+  #     [[ $( ${cmd_echo} ${_vm} | is_json && shell.print ${true} || shell.print ${false} ) == ${true} ]]; then
 
-  )
+    _vm=$(                                                                                              \
+      proxmox.json.vm                                                                                   \
+        --name    testvm                                                                                \
+        --os-type linux                                                                                 \
+        --memory  1024                                                                                  \
+        --cores   1                                                                                     \
+        --storage local                                                                                 \
+        --net0 "virtio,bridge=vmbr0,tag=100"                                                                 \
+        --cd-rom "local:iso/Rocky-9.5-x86_64-minimal.iso"       \
+        --scsi0 "local-lvm:32"
+        # --args "vmlinuz initrd=initrd.img inst.stage2=hd:LABEL=Rocky-9-5-x86-64-dvd rd.live.check quiet inst.ks=https://raw.githubusercontent.com/927technology/kickstart/main/distro/el/minimal.ks"
 
-  echo $_vm | jq
-echo $_host
-echo $_host_port
-echo $_path
-echo ${_api_user}@${_api_user_realm}
+    )
 
-  ${cmd_curl}                                                                                           \
-    -k                                                                                                  \
-    -X POST "https://${_host}:${_host_port}/api2/json/${_path}/"                                          \
-    -H "Authorization: PVEAPIToken=${_api_user}@${_api_user_realm}!${_api_key_name}=${_api_key_value}" \
-    -H "Content-Type: application/json" --data "${_vm}"
+    shell.print $_vm
+
+    # shell.print $_vm | jq
+    # shell.print $_host
+    # shell.print $_host_port
+    # shell.print $_path
+    # shell.print ${_api_user}@${_api_user_realm}
+
+    ${cmd_curl}                                                                                           \
+      -k                                                                                                  \
+      -X POST "https://${_host}:${_host_port}/api2/json/${_path}/"                                          \
+      -H "Authorization: PVEAPIToken=${_api_user}@${_api_user_realm}!${_api_key_name}=${_api_key_value}" \
+      -H "Content-Type: application/json" --data "${_vm}"
 
 
 
@@ -98,6 +116,13 @@ echo ${_api_user}@${_api_user_realm}
     #   -X POST "https://192.168.1.150:8006/api2/json/nodes/vmh-01/qemu/"                                          \
     #   -H "Authorization: PVEAPIToken=svc_api@pve!api=c7d9f2a8-ce86-4ae1-a51b-f187efe43db2" \
     #   -H "Content-Type: application/json" --data ${_vm}
+
+  #   _exit_code=${exit_ok}
+
+  # else
+  #   _exit_code=${exit_crit}
+
+  # fi
 
 }
 

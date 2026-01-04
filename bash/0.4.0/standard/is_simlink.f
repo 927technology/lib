@@ -1,4 +1,4 @@
-is_simlink() {
+is_json() {
   # local variables
   # none
 
@@ -7,15 +7,14 @@ is_simlink() {
   local _exit_string=
 
   while read -r _data; do
-    if [[ -L ${_data} ]]; then
+    ${cmd_echo} "${_data}" | ${cmd_jq} > /dev/null 2>&1
+    if [[ ${?} == ${exit_ok} ]]; then
+      _exit_code=${exit_ok}
       _exit_string=${true}
-
     else  
+      _exit_code=${exit_ok}
       _exit_string=${false}
-
     fi
-    [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
-
   done
 
   # exit

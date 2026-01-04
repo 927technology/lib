@@ -1,0 +1,15 @@
+. ${_lib_root}/cloudera/api.f
+. ${_lib_root}/cloudera/clusters.f
+. ${_lib_root}/cloudera/commission.f
+. ${_lib_root}/cloudera/hosts.f
+. ${_lib_root}/cloudera/hosts/self.f
+. ${_lib_root}/cloudera/hosts/self/cluster.f
+. ${_lib_root}/cloudera/hosts/self/commission.f
+. ${_lib_root}/cloudera/hosts/self/decommission.f
+. ${_lib_root}/cloudera/hosts/self/healthy.f
+. ${_lib_root}/cloudera/hosts/self/is_commissioned.f
+. ${_lib_root}/cloudera/hosts/self/is_decommissioning.f
+. ${_lib_root}/cloudera/hosts/self/is_decommissioning.f
+. ${_lib_root}/cloudera/hosts/self/is_maintenancemode.f
+. ${_lib_root}/cloudera/hosts/self/maintenancemode_end.f
+. ${_lib_root}/cloudera/hosts/self/validate.f
