@@ -47,7 +47,7 @@ gns3.get.project.nodes() {
     _json=$( /bin/curl ${_protocol}://${_host}:${_port}/v2/projects/${_project}/nodes 2>/dev/null | /bin/jq -c )
 
   else
-    _json=$( /bin/curl ${_protocol}://${_host}:${_port}/v2/projects{_project}/nodes 2>/dev/null | /bin/jq -c '[ .[] | select( .name == "'"${_filter}"'" ) | sort_by(.name)]' )
+    _json=$( /bin/curl ${_protocol}://${_host}:${_port}/v2/projects{_project}/nodes 2>/dev/null | /bin/jq -c '[ .[] | select( .name == "'"${_filter}"'" ) ] | sort_by(.name)' )
 
   fi
 
