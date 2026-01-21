@@ -16,6 +16,7 @@ cmd_echo=/bin/echo
 cmd_gearmand=/usr/sbin/gearmand
 cmd_getent=/bin/getent
 cmd_grep=/bin/grep
+cmd_groupadd=/sbin/groupadd
 cmd_hbase=/usr/bin/hbase
 cmd_hdfs=/usr/bin/hdfs
 cmd_head=/usr/bin/head
