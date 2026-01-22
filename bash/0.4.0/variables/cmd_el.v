@@ -53,6 +53,7 @@ cmd_sort=/bin/sort
 cmd_ssh_keygen=/bin/ssh-keygen
 cmd_sshd=/usr/sbin/sshd
 cmd_su=/bin/su
+cmd_sudo=/bin/sudo
 cmd_systemctl=/usr/bin/systemctl
 cmd_tail=/usr/bin/tail
 cmd_tar=/usr/bin/tar
