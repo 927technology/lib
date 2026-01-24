@@ -13,6 +13,7 @@ cmd_cp=/bin/cp
 cmd_curl=/bin/curl
 cmd_date=/bin/date
 cmd_echo=/bin/echo
+cmd_firewallcmd=/bin/firewall-cmd
 cmd_gearmand=/usr/sbin/gearmand
 cmd_getent=/bin/getent
 cmd_grep=/bin/grep
