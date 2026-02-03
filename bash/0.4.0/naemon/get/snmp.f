@@ -97,7 +97,7 @@ function naemon.get.snmp() {
 
       case ${_snmp_version} in 
         1 | 2c )
-          if  [[ !-z ${_snmp_community} ]]; then
+          if  [[ ! -z ${_snmp_community} ]]; then
             ${cmd_snmpwalk}                                           \
               -c ${_snmp_community}                                   \
               -Onq                                                    \
