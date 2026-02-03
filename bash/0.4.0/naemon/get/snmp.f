@@ -102,7 +102,7 @@ function naemon.get.snmp() {
               -Onq                                                    \
               -v ${_snmp_version}                                     \
               ${_address}                                             \
-            > ${_snmp_path}/${_name}
+            > ${_snmp_path}/${_name}.snmp
           
           else
             shell.log "${FUNCNAME} [MISSING] SNMP ${_snmp_version} Community"
@@ -124,7 +124,7 @@ function naemon.get.snmp() {
               -x ${_snmp_privacy_protocol}                            \
               -X ${_snmp_privacy_passphrase}                          \
               ${_adddress}                                            \
-            > ${_snmp_path}/${_name}
+            > ${_snmp_path}/${_name}.snmp
           
           else
             shell.log "missing v3 crap"
