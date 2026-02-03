@@ -2,6 +2,7 @@ function naemon.get.ifs() {
   # delete
   _lib_root=/usr/local/lib/bash/0.4.0
   . ${_lib_root}/variables/cmd_el.v
+  . ${_lib_root}/date.l
   . ${_lib_root}/json.l
   . ${_lib_root}/variables.l
   . ${_lib_root}/standard.l
@@ -71,7 +72,7 @@ function naemon.get.ifs() {
         _json=$( json.set --json "${_json}" --key .if.highspeed      --value $( ${cmd_grep} ${_oid}.23.${value} ${_snmp_path}/${_name}/snmp | ${cmd_awk} -F" " '{print $2}' ) )
 
         # output interface stats to disk
-        shell.log "${FUNCNAME} [WRITING] - ${_snmp_path}/${_name}/ifs/${value}.json"
+        shell.log "${FUNCNAME} [WRITING] - Name: $( ${cmd_grep} ${_oid}.2.${value} ${_snmp_path}/${_name}/snmp  | ${cmd_awk} -F" " '{print $2}' ), Path: ${_snmp_path}/${_name}/ifs/${value}.json"
         ${cmd_echo} ${_json} > ${_snmp_path}/${_name}/ifs/${value}.json
 
     done
