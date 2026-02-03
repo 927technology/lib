@@ -104,7 +104,7 @@ function naemon.get.snmp() {
             > ${_snmp_path}/${_name}
           
           else
-            shell.log "missing snmp community"
+            shell.log "${FUNCNAME} [MISSING] SNMP ${_snmp_version} Community"
 
           fi
         ;;
@@ -130,6 +130,8 @@ function naemon.get.snmp() {
           fi
         ;;
       esac
+    else
+      shell.log "${FUNCNAME} [MISSING] - Path: ${_snmp_path}"
     fi
   fi
 }
