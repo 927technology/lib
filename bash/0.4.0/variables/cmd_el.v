@@ -50,6 +50,7 @@ cmd_sed=/bin/sed
 cmd_seq=/bin/seq
 cmd_sha256sum=/bin/sha256sum
 cmd_sleep=/bin/sleep
+cmd_snmpwalk=/bin/snmpwalk
 cmd_sort=/bin/sort
 cmd_ssh_keygen=/bin/ssh-keygen
 cmd_sshd=/usr/sbin/sshd
