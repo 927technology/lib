@@ -136,4 +136,9 @@ function naemon.get.snmp() {
       shell.log "${FUNCNAME} [MISSING] - Path: ${_snmp_path}"
     fi
   fi
+
+  # exit
+  [[ ${_error_count} != 0 ]] && _exit_code=${exit_crit} || _exit_code=${exit_ok}
+
+  return ${_exit_code}
 }
