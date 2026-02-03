@@ -101,6 +101,7 @@ function naemon.get.snmp() {
               -c ${_snmp_community}                                   \
               -Onq                                                    \
               -v ${_snmp_version}                                     \
+              ${_address}                                             \
             > ${_snmp_path}/${_name}
           
           else
@@ -122,6 +123,7 @@ function naemon.get.snmp() {
               -v ${_snmp_version}                                     \
               -x ${_snmp_privacy_protocol}                            \
               -X ${_snmp_privacy_passphrase}                          \
+              ${_adddress}                                            \
             > ${_snmp_path}/${_name}
           
           else
