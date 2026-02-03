@@ -92,9 +92,8 @@ function naemon.get.snmp() {
       [[ ! -z ${_snmp_version}  ]]; then
 
     # create path
-    if [[ ! -d ${_snmp_path} ]]; then
-      ${cmd_mkdir} --parents ${_snmp_path} || (( _error_count++ ))
-
+    [[ ! -d ${_snmp_path} ]] && { ${cmd_mkdir} --parents ${_snmp_path} || (( _error_count++ )); }
+    if [[ -d ${_snmp_path} ]]; then
       case ${_snmp_version} in 
         1 | 2c )
           if  [[ ! -z ${_snmp_community} ]]; then
@@ -103,6 +102,10 @@ function naemon.get.snmp() {
               -Onq                                                    \
               -v ${_snmp_version}                                     \
             > ${_snmp_path}/${_name}
+          
+          else
+            shell.log "missing snmp community"
+
           fi
         ;;
         3)
@@ -120,6 +123,10 @@ function naemon.get.snmp() {
               -x ${_snmp_privacy_protocol}                            \
               -X ${_snmp_privacy_passphrase}                          \
             > ${_snmp_path}/${_name}
+          
+          else
+            shell.log "missing v3 crap"
+
           fi
         ;;
       esac
