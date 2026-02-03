@@ -44,7 +44,8 @@ function naemon.get.ifs() {
   # /bin/snmpwalk -Onq -v2c -c ${_snmp_community} ${_host} .1.3.6.1.2.1.2.2 > ${_tmp_file}
 
   echo ${_snmp_path}/${_name}/snmp 
-
+  ${cmd_grep} ^.1.3.6.1.2.1.2.2.1.1.[0-9] ${_snmp_path}/${_name}/snmp
+  
   ${cmd_grep} ^.1.3.6.1.2.1.2.2.1.1.[0-9] ${_snmp_path}/${_name}/snmp | \
     while IFS=' ' read -r oid value; do
       _json="{}"
