@@ -45,9 +45,10 @@ function naemon.get.ifs() {
 
   echo ${_snmp_path}/${_name}/snmp 
   ${cmd_grep} ^.1.3.6.1.2.1.2.2.1.1.[0-9] ${_snmp_path}/${_name}/snmp
-  
+
   ${cmd_grep} ^.1.3.6.1.2.1.2.2.1.1.[0-9] ${_snmp_path}/${_name}/snmp | \
     while IFS=' ' read -r oid value; do
+      echo $value
       _json="{}"
 
      _json=$( json.set --json "${_json}" --key .index --value ${value} )
