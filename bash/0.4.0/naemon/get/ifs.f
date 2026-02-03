@@ -1,4 +1,4 @@
-function snmp.get.ifs() {
+function naemon.get.ifs() {
   # delete
   _lib_root=/usr/local/lib/bash/0.4.0
   . ${_lib_root}/variables/cmd_el.v
