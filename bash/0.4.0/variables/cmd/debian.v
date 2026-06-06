@@ -1,5 +1,6 @@
 # commands
-
+cmd_addaptrepository=/usr/bin/add-apt-repository
+cmd_apt=/usr/bin/apt
 cmd_awk=/bin/awk
 cmd_bws=/usr/local/bin/bws
 cmd_cat=/bin/cat
@@ -8,7 +9,10 @@ cmd_chmod=/bin/chmod
 cmd_cp=/bin/cp
 cmd_curl=/usr/bin/curl
 cmd_date=/bin/date
+cmd_debconfsetselections=/usr/bin/debconf-set-selections
 cmd_docker=/usr/bin/docker
+cmd_dotnet=/usr/bin/dotnet
+cmd_dpkg=/usr/bin/dpkg
 cmd_echo=/bin/echo
 cmd_git=/usr/bin/git
 cmd_head=/usr/bin/head
@@ -27,6 +31,7 @@ cmd_sha256sum=/bin/sha256sum
 cmd_snmpget=/usr/bin/snmpget
 cmd_snmpset=/usr/bin/snmpset
 cmd_snmpwalk=/usr/bin/snmpwalk
+cmd_steamcmd=/usr/games/steamcmd
 cmd_systemd=/usr/bin/systemd
 cmd_tail=/usr/bin/tail
 cmd_tar=/usr/bin/tar
