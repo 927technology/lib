@@ -29,6 +29,9 @@ json.append() {
 
   # main
   if    [[ -z "${_value}" ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |=.+ ""' )
+
+  elif  [[ $( ${cmd_echo} "${_value}" ) == null ]]; then
     _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |=.+ null' )
   
   elif  [[ $( ${cmd_echo} "${_value}" | is_json ) == ${true} ]]; then
