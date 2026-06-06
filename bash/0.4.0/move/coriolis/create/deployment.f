@@ -33,11 +33,11 @@ move.coriolis.create.deployment() {
       ;;
       -h | --host | -n | --name )
         shift
-        _name="${1}"
+        _name=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -p  | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift

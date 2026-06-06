@@ -6,17 +6,17 @@ is_string() {
   local _exit_code=${exit_unkn}
   local _exit_string=
 
- while read -r _data; do
-    if  [ ${_data} -ge 0 2>/dev/null ] || \
-        [ ${_data} -le 0 2>/dev/null ]; then
-
-        _exit_code=${exit_crit}
-    
-    else
-        _exit_string=${_data}
+  while read -r _data; do
+    case ${_data} in
+      ''|*[!0-9]*) 
+        _exit_string=${true}
+        _exit_code=${exit_ok}
+      ;;
+      *) 
+        _exit_string=${false}
         _exit_code=${exit_ok} 
-
-    fi
+      ;;
+    esac
   done
 
   # exit

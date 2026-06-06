@@ -10,12 +10,17 @@ move.create.vms() {
   local _json_migr_template_username_map="{}"
   local _json_migr_template_password_map="{}"
   local _json_osfamily="{}"
+  local _json_rapid="{}"
   local _osfamily_distro=
   local _osfamily_version_major=
   local _osfamily_version_minor=
+  local _password_minion_linux=
+  local _password_minion_windows
   local _path_vsphere=~move/vsphere
   local _path_move=~move/move
   local _tmp_file=$( ${cmd_mktemp} )
+  local _user_minion_linux=
+  local _user_minon_windows=
 
   # argument variables
   local _filter=
@@ -35,22 +40,22 @@ move.create.vms() {
     case ${1} in
       -f | --filter )
         shift
-        _filter="${1}"
+        _filter=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -h | --host | -n | --name )
         shift
-        _name="${1}"
+        _name=$( ${cmd_echo} "${1}" | lcase )
       ;;      
       -p | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift
   done
 
   # main
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile move.set.profile --name <profile name>"; return ${exit_crit}; }
 
   ${cmd_mkdir} -p ${_path_move}/${_profile}/transfers
   ${cmd_mkdir} -p ${_path_move}/${_profile}/transfers/vms
@@ -74,6 +79,17 @@ move.create.vms() {
     move.vsphere.list.vms --profile ${_profile} > "${_tmp_file}"
 
   fi
+
+  # get migr_map users and passwords
+  # _json_rapid=$( move.list.profile.active --type coriolis --output rapid --profile ${_profile} )
+  
+  # _password_minion_linux=
+  # _password_minion_windows=
+  # _user_minion_linux=
+  # _user_minon_windows=
+
+
+
 
   # create configs
   for host in $( ${cmd_cat} "${_tmp_file}" | ${cmd_jq} -c '.[]' ); do
@@ -105,13 +121,13 @@ move.create.vms() {
       json.set                                                                                      \
         --json "${_json_transfer}"                                                                  \
         --key .coriolis.transfer.endpoint.source                                                    \
-        --value $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.vsphere.endpoint' )                \
+        --value $( move.coriolis.list.endpoints --profile ${_profile} | jq -r '[ .[] | select( .Type == "vmware_vsphere" ) ] | if( . | length > 0 ) then .[0].Name else null end' ) \                                                                                \
     )
     _json_transfer=$(                                                                               \
       json.set                                                                                      \
         --json "${_json_transfer}"                                                                  \
         --key .coriolis.transfer.endpoint.destination                                               \
-        --value $( move.coriolis.list.endpoints | jq -r '[ .[] | select( .Type == "olvm" ) ] | if( . | length > 1 ) then null else .[0].Name end' ) \                                                                                \
+        --value $( move.coriolis.list.endpoints --profile ${_profile} | jq -r '[ .[] | select( .Type == "olvm" ) ] | if( . | length > 0 ) then .[0].Name else null end' ) \                                                                                \
     )
 
     # enable    
@@ -126,13 +142,13 @@ move.create.vms() {
     _json_transfer=$(                                                                               \
       json.set                                                                                      \
         --json "${_json_transfer}"                                                                  \
-        --key .move.coriolis.execution.date                                                         \
+        --key .move.coriolis.transfer.date                                                          \
         --value null                                                                                \
     )
     _json_transfer=$(                                                                               \
       json.set                                                                                      \
         --json "${_json_transfer}"                                                                  \
-        --key .move.coriolis.execution.enable                                                       \
+        --key .move.coriolis.transfer.enable                                                        \
         --value 0                                                                                   \
     )
     _json_transfer=$(                                                                               \
@@ -239,64 +255,32 @@ move.create.vms() {
         --value $( ${cmd_echo} ${_json_osfamily} | ${cmd_jq} '.GuestOS' )                           \
     )
 
-
     # migr_template_map
-    # migr_template_password_map
-    # migr_template_username_map
-    # windows_virtio_zip_url
     case ${_osfamily} in 
       linux )
-        # _json_migr_template_map=$( 
-        #   json.set 
-        #     --json "${_json_migr_template_map}" 
-        #     --key linux 
-        #     --value $( 
-        #       move.coriolis.list.endpoints.destination.options  
-        #         --type minion 
-        #         --name "minion-${_osfamily_distro}_${_osfamily_version_major}" 
-        #         --output id
-        #     )
-        # ) 
-
          _json_migr_template_map=$(                                                                 \
           json.set                                                                                  \
             --json "${_json_migr_template_map}"                                                     \
             --key ".linux"                                                                          \
             --value $(                                                                              \
-              move.coriolis.list.endpoints.destination.options                                      \
-                --type minion                                                                       \
-                --name OL7U9minion4                                                                 \
+              move.coriolis.list.minions                                                            \
+                --version ${_osfamily_version_major}                                                \
+                --family ${_osfamily}                                                               \
+                --distro ${_osfamily_distro}                                                        \
                 --output id                                                                         \
             )                                                                                       \
         )    
       ;;
       windows )
-        # _json_migr_template_map=$( 
-        #   json.set 
-        #     --json "${_json_migr_template_map}" 
-        #     --key linux 
-        #     --value "minion-ol_8"
-        # )    
-        # _json_migr_template_map=$( 
-        #   json.set 
-        #     --json "${_json_migr_template_map}" 
-        #     --key linux 
-        #     --value $( 
-        #       move.coriolis.list.endpoints.destination.options  
-        #         --type minion 
-        #         --name "minion-${_osfamily_distro}_${_osfamily_version_major}" 
-        #         --output id
-        #     )
-        # )  
-
         _json_migr_template_map=$(                                                                  \
           json.set                                                                                  \
             --json "${_json_migr_template_map}"                                                     \
             --key ".linux"                                                                          \
             --value $(                                                                              \
-              move.coriolis.list.endpoints.destination.options                                      \
-                --type minion                                                                       \
-                --name OL8U10minion2                                                                \
+              move.coriolis.list.minions                                                            \
+                --version 8                                                                         \
+                --family linux                                                                      \
+                --distro ol                                                                         \
                 --output id                                                                         \
             )                                                                                       \
         )    
@@ -305,27 +289,68 @@ move.create.vms() {
             --json "${_json_migr_template_map}"                                                     \
             --key ".windows"                                                                        \
             --value $(                                                                              \
-              move.coriolis.list.endpoints.destination.options                                      \
-                --type minion                                                                       \
-                --name OVIRT_WIN2019minion2                                                         \
+               move.coriolis.list.minions                                                           \
+                --version 2019                                                                      \
+                --family ${_osfamily}                                                               \
+                --distro win                                                                        \
                 --output id                                                                         \
             )                                                                                       \
         ) 
 
-        _json_migr_template_password_map=$(                                                         \
-          json.set                                                                                  \
-            --json "${_json_migr_template_password_map}"                                            \
-            --key ".windows"                                                                        \
-            --value $( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -r '[ .[] | select( .name =="'"${_profile}"'" ) ][0].coriolis[0].migr_map[] | select(( .label | ascii_downcase ) == "windows").password' ) \
-        )
+        # migr_template_password_map
+        # match label == windows && enable == true
+        if [[ $( move.list.profile.active --type coriolis --output migr_map | ${cmd_jq} '.[] | if( select(( .label | ascii_downcase == "windows" ) and .enable == '${true}' )) then .enable else '${false}' end' ) ]]; then
+          _json_migr_template_password_map=$(                                                       \
+            json.set                                                                                \
+              --json "${_json_migr_template_password_map}"                                          \
+              --key ".windows"                                                                      \
+              --value $(                                                                            \
+                move.list.secrets                                                                   \
+                  --secret $(                                                                       \
+                    move.list.profile.active                                                        \
+                      --type coriolis                                                               \
+                      --output migr_map |                                                           \
+                        ${cmd_jq} -r '
+                          .[] | 
+                          if( select(( .label | ascii_downcase == "windows" ) and .enable == '${true}' ).auth.vault.credential ) then 
+                            .auth.vault.credential 
+                          else 
+                            empty 
+                          end
+                        '                                                                           \
+                  )                                                                                 \
+                  --output password                                                                 \
+              )
+          )
+        fi
 
-        _json_migr_template_username_map=$(                                                         \
-          json.set                                                                                  \
-            --json ${_json_migr_template_username_map}                                              \
-            --key ".windows"                                                                        \
-            --value $( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -r '[ .[] | select( .name =="'"${_profile}"'" ) ][0].coriolis[0].migr_map[] | select(( .label | ascii_downcase ) == "windows").username' ) \
-        )
-        
+        # migr_template_username_map
+        # match label == windows && enable == true
+        if [[ $( move.list.profile.active --type coriolis --output migr_map | ${cmd_jq} '.[] | if( select(( .label | ascii_downcase == "windows" ) and .enable == '${true}' )) then .enable else '${false}' end' ) ]]; then
+          _json_migr_template_username_map=$(                                                       \
+            json.set                                                                                \
+              --json "${_json_migr_template_username_map}"                                          \
+              --key ".windows"                                                                      \
+              --value $(                                                                            \
+                move.list.secrets                                                                   \
+                  --secret $(                                                                       \
+                    move.list.profile.active                                                        \
+                      --type coriolis                                                               \
+                      --output migr_map |                                                           \
+                        ${cmd_jq} -r '
+                          .[] | 
+                          if( select(( .label | ascii_downcase == "windows" ) and .enable == '${true}' ).auth.vault.credential ) then 
+                            .auth.vault.credential 
+                          else 
+                            empty 
+                          end
+                        '                                                                           \
+                  )                                                                                 \
+                  --output username                                                                 \
+              )
+          )
+        fi
+
         _json_transfer=$(                                                                           \
           json.set                                                                                  \
             --json "${_json_transfer}"                                                              \
@@ -338,6 +363,8 @@ move.create.vms() {
             --key .coriolis.transfer.destination.migr_template_username_map                         \
             --value "${_json_migr_template_username_map}"                                           \
         )
+
+        # windows_virtio_zip_url
         _json_transfer=$(                                                                           \
           json.set                                                                                  \
             --json "${_json_transfer}"                                                              \
@@ -345,7 +372,106 @@ move.create.vms() {
             --value "$( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -r '[ .[] | select( .name =="'"${_profile}"'" ) ][0].coriolis[0].windows_virtio_zip_url' )" \
         )
       ;;
-    esac 
+    esac
+
+
+    # migr_template_password_map
+    # match label == linux && enable == true
+    if [[ $( move.list.profile.active --type coriolis --output migr_map | ${cmd_jq} '.[] | if( select(( .label | ascii_downcase == "linux" ) and .enable == '${true}' )) then .enable else '${false}' end' ) ]]; then
+      # password from vault != null
+      if [[                                                                                         \
+        $(                                                                                          \
+          move.list.secrets                                                                         \
+            --secret $(                                                                             \
+              move.list.profile.active                                                              \
+                --type coriolis                                                                     \
+                --output migr_map |                                                                 \
+                  ${cmd_jq} -r '
+                    .[] | 
+                    if( select(( .label | ascii_downcase == "linux" ) and .enable == '${true}' ).auth.vault.credential ) then 
+                      .auth.vault.credential 
+                    else 
+                      empty 
+                    end
+                  '                                                                                 \
+            )                                                                                       \
+            --output password                                                                       \
+          ) != null                                                                                 \
+        ]]; then   
+      
+          _json_migr_template_password_map=$(                                                       \
+            json.set                                                                                \
+              --json "${_json_migr_template_password_map}"                                          \
+              --key ".linux"                                                                        \
+              --value $(                                                                            \
+                move.list.secrets                                                                   \
+                  --secret $(                                                                       \
+                    move.list.profile.active                                                        \
+                      --type coriolis                                                               \
+                      --output migr_map |                                                           \
+                        ${cmd_jq} -r '
+                          .[] | 
+                          if( select(( .label | ascii_downcase == "linux" ) and .enable == '${true}' ).auth.vault.credential ) then 
+                            .auth.vault.credential 
+                          else 
+                            empty 
+                          end
+                        '                                                                           \
+                  )                                                                                 \
+                  --output password                                                                 \
+              )
+          )
+      fi # check != null password
+    fi # check active profile
+
+    # migr_template_username_map
+    # match label == linux && enable == true
+    if [[ $( move.list.profile.active --type coriolis --output migr_map | ${cmd_jq} '.[] | if( select(( .label | ascii_downcase == "linux" ) and .enable == '${true}' )) then .enable else '${false}' end' ) ]]; then
+      # password from vault != null
+      if [[                                                                                         \
+        $(                                                                                          \
+          move.list.secrets                                                                         \
+            --secret $(                                                                             \
+              move.list.profile.active                                                              \
+                --type coriolis                                                                     \
+                --output migr_map |                                                                 \
+                  ${cmd_jq} -r '
+                    .[] | 
+                    if( select(( .label | ascii_downcase == "linux" ) and .enable == '${true}' ).auth.vault.credential ) then 
+                      .auth.vault.credential 
+                    else 
+                      empty 
+                    end
+                  '                                                                                 \
+            )                                                                                       \
+            --output password                                                                       \
+          ) != null                                                                                 \
+        ]]; then   
+   
+          _json_migr_template_username_map=$(                                                         \
+            json.set                                                                                  \
+              --json "${_json_migr_template_username_map}"                                            \
+              --key ".linux"                                                                          \
+              --value $(                                                                              \
+                move.list.secrets                                                                     \
+                  --secret $(                                                                         \
+                    move.list.profile.active                                                          \
+                      --type coriolis                                                                 \
+                      --output migr_map |                                                             \
+                        ${cmd_jq} -r '
+                          .[] | 
+                          if( select(( .label | ascii_downcase == "linux" ) and .enable == '${true}' ).auth.vault.credential ) then 
+                            .auth.vault.credential 
+                          else 
+                            empty 
+                          end
+                        '                                                                             \
+                  )                                                                                   \
+                  --output username                                                                   \
+              )
+          )
+      fi # check != null password
+    fi # check active profile
 
     _json_transfer=$(                                                                               \
       json.set                                                                                      \
@@ -657,10 +783,10 @@ move.create.vms() {
       )
     fi
 
-
     # parse network adapters
     if [[ $( ${cmd_echo} "${host}" | ${cmd_jq} '. | if( .NetworkAdapters != null ) then '${true}' else '${false}' end' ) == ${true} ]]; then
       # has configured network adapters
+
       if [[ $( ${cmd_echo} "${host}" | ${cmd_jq} '.NetworkAdapters | if(( type=="array" ) and ( . | length ) > 0 ) then '${true}' else '${false}' end' ) == ${false} ]]; then
         # single network adapter
         _json=$(                                                                                    \
@@ -789,12 +915,49 @@ move.create.vms() {
             --key .networkadapters[0].olvm.name                                                     \
             --value null                                                                            \
         )
-        _json_transfer=$(                                                                           \
-          json.set                                                                                  \
-            --json "${_json_transfer}"                                                              \
-            --key .networkadapters[0].olvm.networkname                                              \
-            --value null                                                                            \
-        )
+
+# echo 10
+# ${cmd_echo} "${host}" | ${cmd_jq}
+
+# move.coriolis.list.endpoints.networks | jq -r '.[] | select( .move.network.vlan == '$( move.vsphere.list.networks --name $( ${cmd_echo} "${host}" | ${cmd_jq} -r '.NetworkAdapters.NetworkName' )  --output vlan_id)' ).name.full'
+# # move.coriolis.list.endpoints.networks | jq -r '.[] | select( .move.network.vlan == '$( move.vsphere.list.networks --name $( move.list.vms --host CoriolisWin-02 --output networkadapters | jq -r '.[].networkname' )  --output vlan_id)' ).name.full'
+
+# echo 15
+# # move.coriolis.list.endpoints.networks | jq -r '.[] | select( .move.network.vlan == '$( move.vsphere.list.networks --name $( move.list.vms --host CoriolisWin-02 --output networkadapters | jq -r '.[]networkname' )  --output vlan_id)' ).name.full'
+
+# echo 17
+
+              # move.coriolis.list.endpoints.networks | ${cmd_jq} -r                                  \
+              #   '.[] | select( .move.network.vlan == '$(                                            \
+              #     move.vsphere.list.networks                                                        \
+              #       --name $(                                                                       \
+              #         ${cmd_echo} "${host}" | ${cmd_jq} -r '.NetworkAdapters.NetworkName'           \
+              #       )                                                                               \
+              #       --output vlan_id                                                                \
+              #   )' ).name.full'  
+
+
+# get networks based on vsphere vlan.   not feasable accroding to shaun as there is not a direct relationship for vlans in vsphere to olvm.
+# echo 10
+#         _json_transfer=$(                                                                           \
+#           json.set                                                                                  \
+#             --json "${_json_transfer}"                                                              \
+#             --key .networkadapters[0].olvm.networkname                                              \
+#             --value $(                                                                              \
+#               move.coriolis.list.endpoints.networks | ${cmd_jq} -r                                  \
+#                 '.[] | select( .move.network.vlan == '$(                                            \
+#                   move.vsphere.list.networks                                                        \
+#                     --name $(                                                                       \
+#                       ${cmd_echo} "${host}" | ${cmd_jq} -r '.NetworkAdapters.NetworkName'           \
+#                     )                                                                               \
+#                     --output vlan_id                                                                \
+#                 )' ).name.full'                                                                     \
+#             )
+#         )
+
+# echo 20
+
+
         _json_transfer=$(                                                                           \
           json.set                                                                                  \
             --json "${_json_transfer}"                                                              \

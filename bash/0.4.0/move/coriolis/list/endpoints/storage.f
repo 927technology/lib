@@ -1,4 +1,10 @@
 move.coriolis.list.endpoints.storage() {
+  #_description: Displays networks cached from the Coriolis Server
+  #_filter: true
+  #_name: true
+  #_arguments: --filter,--name,--output
+  #_output: id,endpoint,endpoint_id,name,olvm_datacenter,vlan
+  
   # local variables
   local _json=
   local _path=~move/coriolis
@@ -28,17 +34,23 @@ move.coriolis.list.endpoints.storage() {
         shift
         _output="${1}"
       ;;
+      -p  | --profile )
+        shift
+        _profile=$( ${cmd_echo} "${1}" | lcase )
+      ;;
     esac
     shift
   done
 
   # main
-  if    [[ ! -z ${_name} ]] &&                                                                      \
-        [[ -d ${_path}/${MOVE_PROFILE}/endpoints/storage/ ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/storage/*.json | ${cmd_jq} '. | select( ( .olvm.domain | ascii_downcase ) == "'${_name}'" )' )
+  [[ -z ${_profile} ]] && return ${exit_crit}
 
-  elif  [[ -d ${_path}/${MOVE_PROFILE}/endpoints/storage/ ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/storage/*.json )
+  if    [[ ! -z ${_name} ]] &&                                                                      \
+        [[ -d ${_path}/${_profile}/endpoints/storage/ ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/endpoints/storage/*.json | ${cmd_jq} '. | select( ( .olvm.domain | ascii_downcase ) == "'${_name}'" )' )
+
+  elif  [[ -d ${_path}/${_profile}/endpoints/storage/ ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/endpoints/storage/*.json )
 
   else
     _exit_code=${exit_crit}

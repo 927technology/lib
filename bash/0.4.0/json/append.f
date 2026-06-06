@@ -1,6 +1,6 @@
 json.append() {
   # local variables
-  local _json="{}"
+  local _json=
   local _key=
   local _value=
 
@@ -28,18 +28,20 @@ json.append() {
   done
 
   # main
-  case $( ${cmd_echo} "${_value}" | is_integer ) in
-    ${true} )
-      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'                    |=.+ '${_value} )
-      [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+  if    [[ -z "${_value}" ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |=.+ null' )
+  
+  elif  [[ $( ${cmd_echo} "${_value}" | is_json ) == ${true} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |=.+ '${_value} )
 
-    ;;
-    ${false} )
-      _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'                    |=.+ "'"${_value}"'"' )
-      [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+  elif  [[ $( ${cmd_echo} "${_value}" | is_integer ) == ${true} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |=.+ '${_value} )
 
-    ;;
-  esac
+  elif  [[ $( ${cmd_echo} "${_value}" | is_string ) == ${true} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |=.+ "'"${_value}"'"' )
+
+  fi
+  [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
 
   # exit
   ${cmd_echo} ${_json}

@@ -1,4 +1,10 @@
 move.coriolis.list.deployments() {
+  #_description: Displays cached coriolis deployments
+  #_filter: false
+  #_name: false
+  #_arguments: --name,--output,--status
+  #_output: date,epoch,id,transfer_id,instances,name,notes,status
+
   # local variables
   local _json=
   local _path=~move/coriolis

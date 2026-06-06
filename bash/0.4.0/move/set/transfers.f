@@ -29,7 +29,7 @@ move.set.transfers() {
       ;;
       -h | --host | -n | --name )
         shift
-        _name="${1}"
+        _name=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -i | --id )
         shift
@@ -41,7 +41,7 @@ move.set.transfers() {
       ;;
       -p | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -v | --value )
         shift
@@ -52,7 +52,7 @@ move.set.transfers() {
   done
 
   # main
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && return ${exit_crit}
 
   if    [[ ! -z ${_name} ]]; then
     _json=$( move.list.transfers --name ${_name} --profile ${_profile} && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
@@ -114,6 +114,7 @@ move.set.transfers() {
     fi
 
   done
+
   # exit
   [[ ${_error_count} != 0 ]] && _exit_code=${exit_crit} || _exit_code=${exit_ok}
 

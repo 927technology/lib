@@ -26,6 +26,8 @@ move.list.profiles() {
   done
 
   # main
+  # [[ -z ${_profile} ]] && return ${exit_crit}
+
   if [[ ! -z ${_profile} ]]; then
     _json=$( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -c '.[] | select(( .name == "'"${_profile}"'" ) and .enable == '${true}' )' )
 
@@ -34,12 +36,20 @@ move.list.profiles() {
 
   fi
 
+
   if [[ ! -z ${_output} ]]; then
     case ${_output} in
-      name                 ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.name'                                                                ;;
+      coriolis             ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.coriolis | select( .[0].enable == '${true}' )'           ;;
+      coriolis_server      ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.coriolis | select( .[0].enable == '${true}' )[0].server' ;;
+      enable               ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.enable'                                                  ;;
+      name                 ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.name'                                                    ;;
+      rapid_key            ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.auth.rapid.key'                                          ;;
+      rapid_secret         ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.auth.rapid.secret'                                       ;;
+      vault                ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.auth.vault.name'                                         ;;
+      vsphere              ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.vsphere | select( .[0].enable == '${true}' )'            ;;
+      vsphere_server       ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.vsphere | select( .[0].enable == '${true}' )[0].server'  ;;
 
     esac
-  
   else
     ${cmd_echo} ${_json} | ${cmd_jq} -sc
 

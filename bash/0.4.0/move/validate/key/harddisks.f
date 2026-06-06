@@ -12,7 +12,6 @@ move.validate.key.harddisks() {
 
   # argument variables
   local _json=
-  local _naemon=${false}
   local _name=
   local _profile=
   local _type=
@@ -22,7 +21,7 @@ move.validate.key.harddisks() {
     case ${1} in
       -t | --type )
         shift
-        _type="${1}"
+        _type=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -j | --json )
         shift
@@ -30,19 +29,19 @@ move.validate.key.harddisks() {
       ;;
       -h | --host | -n | --name )
         shift
-        _name="${1}"
+        _name=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -p | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
-      -N | --naemon )
-        _naemon=${true}
      esac
     shift
   done
 
   # main
+  [[ -z ${_profile} ]] && return ${exit_crit}
+
   if   [[ ! -z ${_name} ]]; then
     _json=$( move.list.transfers --name ${_name} --profile ${_profile} | ${cmd_jq} -c '.[]' )
 
@@ -54,46 +53,26 @@ move.validate.key.harddisks() {
 
   if [[ ! -z ${_endpoint_destination} ]]; then
     # set coriolis endpoint
-    move.coriolis.set.endpoint --name ${_endpoint_destination}
+    move.coriolis.set.endpoint --name ${_endpoint_destination} --profile ${_profile} 2>/dev/null
 
     # harddisk transfer options
     for harddisk in $( ${cmd_echo} "${_json}" | ${cmd_jq} -c '.harddisks[]' ); do 
       # zero loop variables
 
       if [[ $( ${cmd_echo} ${harddisk} | ${cmd_jq} '.olvm.domain' ) != null ]]; then
-        if [[ ${_naemon} == ${false} ]]; then
-          shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SET]      End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain, VALUE: $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
-        
-        fi
+        shell.log "${FUNCNAME}(${_profile}) - [SET]      End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain, VALUE: $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
 
         # check value exists in endpoint
-        if [[ $( move.coriolis.list.endpoints.destination.options --endpoint ${_endpoint_destination} --type storage_mappings | ${cmd_jq} '[ .[] | select( .name == "'"$( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"'") ] | length' ) > 0 ]]; then
+        if [[ $( move.coriolis.list.endpoints.destination.options --endpoint ${_endpoint_destination} --profile ${_profile} --type storage_mappings | ${cmd_jq} '[ .[] | select( .name == "'"$( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"'") ] | length' ) > 0 ]]; then
           # value exists
-          if [[ ${_naemon} == ${false} ]]; then
-            shell.log "${_exit_string}${FUNCNAME}(${MOVE_PROFILE}) - [VALID]    End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain, VALUE: $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
+          shell.log "${_exit_string}${FUNCNAME}(${_profile}) - [VALID]    End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain, VALUE: $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
 
-          else
-            _exit_string+="[VALID] .harddisks[${_count}].olvm.domain = $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
-            _exit_string+="\n[Size]     $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.vsphere.capacitygb' )GB"
-            _exit_string+="\n\n"
-
-          fi
         else
           # value does not exist
           if [[ $( ${cmd_echo} ${harddisk} | ${cmd_jq} '.olvm.domain' ) != null ]]; then
-            if [[ ${_naemon} == ${false} ]]; then
-              shell.log "${_exit_string}${FUNCNAME}(${MOVE_PROFILE}) - [INVALID]  End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain, VALUE: $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
-              shell.log "${_exit_string}${FUNCNAME}(${MOVE_PROFILE}) - [FIX]      move.set.transfers --host ${_name} --key .harddisks[${_count}].olvm.domain --profile ${_profile} --value <storage_domain>"
-              shell.log "${_exit_string}${FUNCNAME}(${MOVE_PROFILE}) - [STORAGE_DOMAIN]  $( ${cmd_echo} $( move.coriolis.list.endpoints.destination.options --endpont ${_endpoint_destination} --type storage_mappings --output name ) | ${cmd_sed} 's/\ /, /g' )"
-
-            else
-              _exit_string+="[INVALID] .harddisks[${_count}].olvm.domain = $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
-              _exit_string+="\n[Size]     $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.vsphere.capacitygb' )GB"
-              _exit_string+="\n[FIX]      move.set.transfers --host ${_name} --key .harddisks[${_count}].olvm.domain --profile ${_profile} --value <storage_domain>"
-              _exit_string+="\n[STORAGE_DOMAIN]  $( ${cmd_echo} $( move.coriolis.list.endpoints.destination.options --endpont ${_endpoint_destination} --type storage_mappings --output name ) | ${cmd_sed} 's/\ /, /g' )"
-              _exit_string+="\n\n"
-            
-            fi
+            shell.log "${_exit_string}${FUNCNAME}(${_profile}) - [INVALID]  End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain, VALUE: $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )"
+            shell.log "${_exit_string}${FUNCNAME}(${_profile}) - [FIX]      move.set.transfers --host ${_name} --key .harddisks[${_count}].olvm.domain --profile ${_profile} --value <storage_domain>"
+            shell.log "${_exit_string}${FUNCNAME}(${_profile}) - [STORAGE_DOMAIN]  $( ${cmd_echo} $( move.coriolis.list.endpoints.destination.options --endpoint ${_endpoint_destination} --type storage_mappings --output name ) | ${cmd_sed} 's/\ /, /g' )"
 
             (( _error_count++ ))
           
@@ -101,43 +80,20 @@ move.validate.key.harddisks() {
         fi
 
       else
-        if [[ ${_naemon} == ${false} ]]; then
-          shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [UNSET]    End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain"
-          shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FIX]      move.set.transfers --host ${_name} --key .harddisks[${_count}].olvm.domain --profile ${_profile} --value <storage_domain>"
-          shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [STORAGE_DOMAIN]  $( ${cmd_echo} $( move.coriolis.list.endpoints.destination.options --endpont ${_endpoint_destination} --type storage_mappings --output name ) | ${cmd_sed} 's/\ /, /g' )" 
-
-        else 
-          _exit_string+="[UNSET] .harddisks[${_count}].olvm.domain"
-          _exit_string+="\n[Size]     $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.vsphere.capacitygb' )GB"
-          _exit_string+="\n  [FIX]             move.set.transfers --host ${_name} --key .harddisks[${_count}].olvm.domain --profile ${_profile} --value <storage_domain>"
-          _exit_string+="\n  [STORAGE_DOMAIN]  $( ${cmd_echo} $( move.coriolis.list.endpoints.destination.options --endpont ${_endpoint_destination} --type storage_mappings --output name ) | ${cmd_sed} 's/\ /, /g' )" 
-          _exit_string+="\n\n"
-        fi
+        shell.log "${FUNCNAME}(${_profile}) - [UNSET]    End Point: ${_endpoint_destination}, VM: $( ${cmd_echo} "${_json}" | ${cmd_jq} -r '.name' ), KEY: .harddisks[${_count}].olvm.domain"
+        shell.log "${FUNCNAME}(${_profile}) - [FIX]      move.set.transfers --host ${_name} --key .harddisks[${_count}].olvm.domain --profile ${_profile} --value <storage_domain>"
+        shell.log "${FUNCNAME}(${_profile}) - [STORAGE_DOMAIN]  $( ${cmd_echo} $( move.coriolis.list.endpoints.destination.options --endpoint ${_endpoint_destination} --type storage_mappings --output name ) | ${cmd_sed} 's/\ /, /g' )" 
 
         (( _error_count++ ))
 
       fi
 
-      # ${cmd_echo}
       (( _count++ ))
 
     done
   fi
 
   # exit
-  [[ ${_error_count} != 0 ]] && _exit_code=${exit_unkn} || _exit_code=${exit_ok}
-  if [[ ${_naemon} == ${true} ]]; then
-    if [[ ${_exit_code} > 0 ]]; then
-      _exit_string="[PROBLEM]\n-----------------------------\n\n${_exit_string}"
-
-    else
-      _exit_string="[SUCCESS]\n-----------------------------\n\n${_exit_string}"
-
-    fi
-
-    ${cmd_echo} -e ${_exit_string}
-
-  fi
-
+  [[ ${_error_count} != 0 ]] && _exit_code=${exit_crit} || _exit_code=${exit_ok}
   return ${_exit_code}
 }

@@ -27,7 +27,7 @@ move.vsphere.list.endpoints() {
   done
 
   # main
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && return ${exit_crit}
 
   if [[ ! -z ${_profile} ]]; then
     _json=$( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -c '.[] | select(( .name == "'"${_profile}"'" ) and .enable == '${true}' ).vsphere[] | select( .enable == '${true}' )' )
@@ -40,6 +40,7 @@ move.vsphere.list.endpoints() {
   if [[ ! -z ${_output} ]]; then
     case ${_output} in
       name                 ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.endpoint'                                                                ;;
+      server               ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.server'                                                                ;;
 
     esac
   

@@ -1,9 +1,6 @@
 json.set() {
-  # dependancies
-  # json/set
-
   # local variables
-  local _json="{}"
+  local _json=
   local _key=
   local _value=
 
@@ -29,36 +26,23 @@ json.set() {
     esac
     shift
   done
-  
+
   # main
-  if    [[ -z ${_value} ]]; then
-    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= null' )
-    _exit_code=${exit_ok}
+  if    [[ -z "${_value}" ]]; then
+    _json=$( ${cmd_echo} "${_json}" | ${cmd_jq} -c "${_key}"'   |= null' )
     
-  elif  [[ ${_value} == {} ]]; then
-    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= {}' )
-    _exit_code=${exit_ok}
- 
-  elif  [[ ${_value} == [] ]]; then
-    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'   |= []' )
-    _exit_code=${exit_ok}
+  elif  [[ $( ${cmd_echo} "${_value}" | is_json ) == ${true} ]]; then
+    _json=$( ${cmd_echo} "${_json}" | ${cmd_jq} -c "${_key}"'   |= '${_value} )
 
-  elif  [[ $( ${cmd_echo} "${_value}" | is_integer >/dev/null 2>&1; ${cmd_echo} ${?} ) == ${exit_ok} ]]; then
-    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'     |= '${_value} )
-    _exit_code=${exit_ok}
+  elif  [[ $( ${cmd_echo} "${_value}" | is_integer ) == ${true} ]]; then
+    _json=$( ${cmd_echo} "${_json}" | ${cmd_jq} -c "${_key}"'   |= '${_value} )
 
-  elif  [[ $( ${cmd_echo} "${_value}" | is_string >/dev/null 2>&1; ${cmd_echo} ${?} ) == ${exit_ok} ]]; then
-    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c "${_key}"'     |= "'"${_value}"'"' )
-    _exit_code=${exit_ok}
-
-  else
-    _exit_code=${exit_crit}
+  elif  [[ $( ${cmd_echo} "${_value}" | is_string ) == ${true} ]]; then
+    _json=$( ${cmd_echo} "${_json}" | ${cmd_jq} -c "${_key}"'   |= "'"${_value}"'"' )
 
   fi
 
-  [[ ${?} != ${exit_ok} ]] && _exit_code=${exit_crit} || _exit_code=${exit_ok}
-
   # exit
-  ${cmd_echo} ${_json}
+  ${cmd_echo} "${_json}"
   return ${_exit_code}
 }

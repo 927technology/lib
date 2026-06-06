@@ -10,7 +10,7 @@ vsphere.get.vms() {
   local _password=
   local _profile=
   local _search=
-  local _type=
+  local _type=connect
   local _user=
   local _vsphere=
 
@@ -20,8 +20,11 @@ vsphere.get.vms() {
   local _exit_string=
   local folder=
   local file=
+  local search=
+  local type=
   local vsphere=
   local vm=
+  local vsphere_json="{}"
 
   # parse arguments
   while [[ ${1} != "" ]]; do
@@ -40,7 +43,14 @@ vsphere.get.vms() {
       ;;      
       -t  | --type )
         shift
-        _type="${1}"
+        case $( ${cmd_echo} "${1}" | lcase ) in
+          connect | connection  ) _type=connect ;; 
+          folder | host | regex ) _type="${1}"  ;;
+          * ) 
+            shell.log "${FUNCNAME}(${_profile}) - [TYPE] \"${1}\" is not a proper search type, exiting"
+            return
+          ;;
+        esac
       ;;      
       -u  | --user )
         shift
@@ -55,11 +65,14 @@ vsphere.get.vms() {
   done
 
   # main
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && return ${exit_crit}
 
   ${cmd_mkdir} -p ${_path}/${_profile}/vms
 
-  for vsphere in $( move.vsphere.list.active --output name ); do
+  # set vsphere endpoint
+  move.vsphere.set.endpoint --profile ${_profile}
+
+  for vsphere in $( move.vsphere.list.active --profile ${_profile} --output name ); do
     # zero out loop variables
     _name=
     _password=
@@ -77,14 +90,55 @@ vsphere.get.vms() {
 
     # check if vsphere server is available
     if [[ $( ${cmd_ping} -c 1 ${VSPHERE_SERVER} >/dev/null 2>&1; ${cmd_echo} ${?} ) == ${exit_ok} ]]; then
-      
+      shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] vSphere: ${VSPHERE_SERVER} is available"
+
       # type and search are provided
-      if  [[ ! -z ${_type} ]]     && \
-          [[ ! -z ${_search} ]]; then
+      if  ( [[ ! -z ${_type} ]] && [[ ! -z ${_search} ]] ) || \
+          [[ ${_type} == "connect" ]]; then
+      
+      
         shell.log "${FUNCNAME}(${_profile}) - [FILTER] Type: ${_type}, Search: ${_search}"
         shell.log "${FUNCNAME}(${_profile}) - [WRITING] File: ${_tmp_file}"
 
-        ${cmd_pwsh} -Command /usr/local/bin/powercli/get-vm.ps1 -name ${VSPHERE_NAME} -password ${VSPHERE_PASSWORD} -search ${_search} -type ${_type} -user ${VSPHERE_USER} -vsphere ${VSPHERE_SERVER} | ${cmd_grep} -v WARNING: > ${_tmp_file} 
+        # powershell query vsphere
+        case ${_type} in 
+          connect )
+            # ensure tmp_file is zero
+            > ${_tmp_file}
+
+            # parse connect.json
+            for vsphere_json in $( move.list.profiles --output vsphere --profile ${_profile} | ${cmd_jq} -c '.[]' ); do
+              for type in folders hosts regex; do
+                for search in $( ${cmd_echo} "${vsphere_json}" | ${cmd_jq} -r 'if( .inventory.'"${type}"' ) then .inventory.'"${type}"'[] else empty end' ); do
+                  shell.log "${FUNCNAME}(${_profile}) - [NOTICE] Search: ${search}, Type: ${type}, Using: connect.json"
+
+                  # append output to tmp_file
+                  ${cmd_pwsh}                                   \
+                    -Command /usr/local/bin/powercli/get-vm.ps1 \
+                    -name ${VSPHERE_NAME}                       \
+                    -password ${VSPHERE_PASSWORD}               \
+                    -search ${search} -type ${type}             \
+                    -user ${VSPHERE_USER}                       \
+                    -vsphere ${VSPHERE_SERVER} | ${cmd_grep} -v WARNING: >> ${_tmp_file} 
+                done
+              done
+            done 
+          ;;
+          * )
+            shell.log "${FUNCNAME}(${_profile}) - [NOTICE] Search: ${_search}, Type: ${_type}, Using: CLI Arguments"
+            # parse command arguments
+            ${cmd_pwsh}                                         \
+              -Command /usr/local/bin/powercli/get-vm.ps1       \
+              -name ${VSPHERE_NAME}                             \
+              -password ${VSPHERE_PASSWORD}                     \
+              -search ${_search}                                \
+              -type ${_type}                                    \
+              -user ${VSPHERE_USER}                             \
+              -vsphere ${VSPHERE_SERVER} | ${cmd_grep} -v WARNING: > ${_tmp_file} 
+          ;;
+
+        esac
+
         for vm in $( ${cmd_cat} ${_tmp_file} | ${cmd_jq} -c ); do
           vm=$(
             json.set \
@@ -132,7 +186,6 @@ vsphere.get.vms() {
   done
 
   shell.log "${FUNCNAME}(${_profile}) - [ERROR COUNT] ${_error_count}"
-
 
   # cleanup
   if [[ -f ${_tmp_file} ]]; then

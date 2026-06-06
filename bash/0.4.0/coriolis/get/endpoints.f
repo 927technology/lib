@@ -24,7 +24,7 @@ coriolis.get.endpoints() {
   # parse arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -p  | --profile | -n | --name )
+      -p  | --profile )
         shift
         _profile="${1}"
       ;;
@@ -33,22 +33,23 @@ coriolis.get.endpoints() {
   done
 
   # main
-  # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && return ${exit_crit}
 
   # clear cached data
   [[ -d ${_path}/${_profile}/endpoints ]] && ${cmd_rm} -rf ${_path}/${_profile}/endpoints
   ${cmd_mkdir} -p ${_path}/${_profile}/endpoints
 
-  for endpoint in $( move.coriolis.list.active --output name || (( _error_count++ )) ); do
+
+  for server in $( move.coriolis.list.active --output name --profile ${_profile} || (( _error_count++ )) ); do
     # zero out loop data
     _json=
 
     # set endpoint
-    move.coriolis.set.endpoint --name ${endpoint} || (( _error_count++ ))
+    move.coriolis.set.endpoint --profile ${_profile} || (( _error_count++ ))
 
     # get endpoint data
     _json=$( ${cmd_coriolis} endpoint list -f json 2>/dev/null | ${cmd_jq} -c )
+
     for coriolis_endpoint in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[]' ); do
       # zero out loop variables
       _id=

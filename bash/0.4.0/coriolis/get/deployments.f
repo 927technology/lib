@@ -24,9 +24,9 @@ coriolis.get.deployments() {
   # parse arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -p  | --profile | -n | --name )
+      -p  | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift
@@ -34,37 +34,31 @@ coriolis.get.deployments() {
 
   # main
   # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile move.set.profile --name <profile name>"; return ${exit_crit}; }
 
   # clear cached data
   [[ -d ${_path}/${_profile}/deployments ]] && ${cmd_rm} -rf ${_path}/${_profile}/deployments
   ${cmd_mkdir} -p ${_path}/${_profile}/deployments
 
-  for endpoint in $( move.coriolis.list.active --output name ); do
-    # zero out loop data
-    _json=
+  # set endpoint
+  move.coriolis.set.endpoint --profile ${_profile}
 
-    # set endpoint
-    move.coriolis.set.endpoint --name ${endpoint}
-
-    _json=$( ${cmd_coriolis} deployment list -f json 2>/dev/null | ${cmd_jq} )
-    
-    for deployment in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[]' ); do
-      # zero out loop variables
-      _id=
-      _name=
-
-      _id=$( ${cmd_echo} ${deployment} | ${cmd_jq} -r '.ID' )
-      _name=$( ${cmd_echo} ${deployment} | ${cmd_jq} -r '.Instances' | ${cmd_sed} 's/\//-/g' )
-
-      ${cmd_echo} ${deployment} > ${_path}/${_profile}/deployments/${_id}.json
-      [[ ${?} != ${exit_ok} ]] && (( _error_count++ )) 
-
-        shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: ${endpoint}, ID: ${_id}"
-
-    done
-  done
+  _json=$( ${cmd_coriolis} deployment list -f json 2>/dev/null | ${cmd_jq} )
   
+  for deployment in $( ${cmd_echo} ${_json} | ${cmd_jq} -c '.[]' ); do
+    # zero out loop variables
+    _id=
+    _name=
+
+    _id=$( ${cmd_echo} ${deployment} | ${cmd_jq} -r '.ID' )
+    _name=$( ${cmd_echo} ${deployment} | ${cmd_jq} -r '.Instances' | ${cmd_sed} 's/\//-/g' )
+
+    ${cmd_echo} ${deployment} > ${_path}/${_profile}/deployments/${_id}.json
+    [[ ${?} != ${exit_ok} ]] && (( _error_count++ )) 
+      shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] ID: ${_id}, VM: $( ${cmd_echo} ${deployment} | ${cmd_jq} -r '.Instances | split("/") | .[-1]' )"
+
+  done
+    
   shell.log "${FUNCNAME}(${_profile}) - [COMPLETE]"
 
   # exit

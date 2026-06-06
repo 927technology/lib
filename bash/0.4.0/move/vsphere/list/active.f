@@ -35,11 +35,11 @@ move.vsphere.list.active() {
 
   # main
   # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && return ${exit_crit}
 
 
   if [[ ! -z ${_profile} ]]; then
-    _json=$( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -c '[ .[] | select(( .name == "'"${_profile}"'" ) and .enable == '${true}' ) ]' )
+    _json=$( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -c '.[] | select(( .name == "'"${_profile}"'" ) and .enable == '${true}' )' )
 
   else
     (( _error_count++ ))
@@ -47,7 +47,7 @@ move.vsphere.list.active() {
   fi
 
   # itterate active profiles
-  for profile in $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[].name ' ); do
+  for profile in $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.name ' ); do
 
     # itterate active endpoints
     for endpoint in $( move.vsphere.list.endpoints --profile ${profile} | ${cmd_jq} -c '.[]' ); do
@@ -63,7 +63,7 @@ move.vsphere.list.active() {
             ${cmd_printf} "------------------------------------------------------------------------\n"
             ${cmd_printf} "%-2s %-30s : %-20s\n" "$(( ${_count} + 1 ))" "Endpoint Name" $( ${cmd_echo} ${endpoint} | ${cmd_jq} -r '.endpoint  | if( . == null ) then "unset" else . end' )
             ${cmd_printf} "%-2s %-30s : %-20s\n" "" "Password"                          "**********"
-            ${cmd_printf} "%-2s %-30s : %-20s\n" "" "User Name"                         $( ${cmd_echo} ${endpoint} | ${cmd_jq} -r '.user      | if( . == null ) then "unset" else . end' )
+            ${cmd_printf} "%-2s %-30s : %-20s\n" "" "User Name"                         $( move.list.secrets --profile ${_profile} --secret $( ${cmd_echo} ${endpoint} | ${cmd_jq} -r '.auth.vault.credential.name | if( . == null ) then empty else . end' ) --output username 2>/dev/null )
             ${cmd_printf} "%-2s %-30s : %-20s\n" "" "VSphere Server"                    $( ${cmd_echo} ${endpoint} | ${cmd_jq} -r '.server    | if( . == null ) then "unset" else . end' )
           ;;
 

@@ -8,6 +8,7 @@ move.list.vms() {
   local _name=
   local _id=
   local _output=
+  local _profile=
 
   # control variables
   local _exit_code=${exit_unkn}
@@ -31,24 +32,27 @@ move.list.vms() {
         shift
         _output=$( ${cmd_echo} "${1}" | lcase )
       ;;
-      -s | --short )
-        _output=name
+      -p | --profile )
+        shift
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift
   done
 
   # main
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile with the --profile <profile name> flag"; return ${exit_crit}; }
+
   if  [[ ! -z  ${_name} ]]    && \
-      [[ -f ${_path}/${MOVE_PROFILE}/transfers/vms/${_name} ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/transfers/vms/${_name} 2>/dev/null && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
+      [[ -f ${_path}/${_profile}/transfers/vms/${_name} ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/vms/${_name} 2>/dev/null && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
 
   elif  [[ ! -z ${_filter} ]] && \
-        [[ -d ${_path}/${MOVE_PROFILE}/transfers/vms ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/transfers/vms/*.json 2>/dev/null | ${cmd_jq} '. | select(( .name? | ascii_downcase ) | match("'"${_filter}"'"))' )
+        [[ -d ${_path}/${_profile}/transfers/vms ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/vms/*.json 2>/dev/null | ${cmd_jq} '. | select(( .name? | ascii_downcase ) | match("'"${_filter}"'"))' )
 
-  elif  [[ -d ${_path}/${MOVE_PROFILE}/transfers/vms ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/transfers/vms/*.json 2>/dev/null | ${cmd_jq} -c && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
+  elif  [[ -d ${_path}/${_profile}/transfers/vms ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/vms/*.json 2>/dev/null | ${cmd_jq} -c && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
 
   else
     _exit_code=${exit_crit}
@@ -58,10 +62,12 @@ move.list.vms() {
   if [[ ! -z ${_output} ]]; then
     case ${_output} in
       id              ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.vsphere.host.id'                                         ;;
-      name            ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.name'                                       ;;
-      networkadapters ) ${cmd_echo} ${_json} | ${cmd_jq}    '.networkadapters | length'                   ;;
-      harddisks       ) ${cmd_echo} ${_json} | ${cmd_jq}    '.harddisks | length'                         ;;
-      os              ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.vsphere.host.guestos'                                    ;;
+      mac             ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.networkadapters[0].macaddress'        ;;
+      name            ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.name'                                 ;;
+      # networkadapters ) ${cmd_echo} ${_json} | ${cmd_jq}    '.networkadapters | length'           ;;
+      networkadapters ) ${cmd_echo} ${_json} | ${cmd_jq}    '.networkadapters'                      ;;
+      harddisks       ) ${cmd_echo} ${_json} | ${cmd_jq}    '.harddisks | length'                   ;;
+      os              ) ${cmd_echo} ${_json} | ${cmd_jq} -r '.vsphere.host.guestos'                 ;;
 
     esac
   

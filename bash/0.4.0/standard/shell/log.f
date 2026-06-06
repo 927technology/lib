@@ -36,7 +36,10 @@ shell.log() {
     
   else
     >&2 ${cmd_echo} $( date.pretty ) ${_string}
-
+    if  [[ ! -z ${LOGFILE} ]] && \
+        [[ -d $( ${cmd_echo} ${LOGFILE} | ${cmd_awk} 'BEGIN{FS=OFS="/"}{NF--; print}' ) ]]; then
+      ${cmd_echo} $( date.pretty ) ${_string} >> ${LOGFILE}
+    fi
   fi
 
   # exit

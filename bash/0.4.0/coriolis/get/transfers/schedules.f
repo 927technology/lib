@@ -23,9 +23,9 @@ coriolis.get.transfers.schedules() {
   # parse arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -p  | --profile | -n | --name )
+      -p  | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift
@@ -33,32 +33,29 @@ coriolis.get.transfers.schedules() {
 
   # main
   # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile move.set.profile --name <profile name>"; return ${exit_crit}; }
 
   # clear cached data
   [[ -d ${_path}/${_profile}/transfers/schedules ]] && ${cmd_rm} -rf ${_path}/${_profile}/transfers/schedules
   ${cmd_mkdir} -p ${_path}/${_profile}/transfers/schedules
 
-  for endpoint in $( move.coriolis.list.active --output name ); do
-    # set endpoint
-    move.coriolis.set.endpoint --name ${endpoint}
+  # set endpoint
+  move.coriolis.set.endpoint --profile ${_profile}
 
-    # interate transfers
-    for transfer in $( move.coriolis.list.transfers --output name ); do
+  # interate transfers
+  for transfer in $( move.coriolis.list.transfers --output name --profile ${_profile} ); do
+    # zero out loop data
+    _json=
+
+    # iterate schedules
+    for schedule in $( ${cmd_coriolis} transfer schedule list -f json ${transfer} 2>/dev/null | ${cmd_jq} -c '.[]' ); do
       # zero out loop data
-      _json=
+      _id=
+      
+      _id=$( ${cmd_echo} ${schedule} | ${cmd_jq} -r '.ID' )
+      ${cmd_echo} "${schedule}" > ${_path}/${_profile}/transfers/schedules/${_id}.json
+      shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] ID: ${_id}, VM: $( ${cmd_echo} ${deployment} | ${cmd_jq} -r '.Instances | split("/") | .[-1]' )"
 
-      # iterate schedules
-      for schedule in $( ${cmd_coriolis} transfer schedule list -f json ${transfer} 2>/dev/null | ${cmd_jq} -c '.[]' ); do
-        # zero out loop data
-        _id=
-        
-        _id=$( ${cmd_echo} ${schedule} | ${cmd_jq} -r '.ID' )
-
-        ${cmd_echo} "${schedule}" > ${_path}/${_profile}/transfers/schedules/${_id}.json
-        shell.log "${FUNCNAME}(${_profile}) - [SUCCESS]  End Point: ${endpoint}, ID: ${_id}"
-
-      done
     done
   done
 

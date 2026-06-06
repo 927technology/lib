@@ -1,6 +1,6 @@
 json.delete() {
   # local variables
-  local _json="{}"
+  local _json=
   local _key=
 
   # control variables

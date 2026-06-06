@@ -25,7 +25,7 @@ move.vsphere.list.vms() {
       ;;
       -h | --host | -n | --name )
         shift
-        _name="${1}"
+        _name=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -i | --id )
         _id=${true}
@@ -38,32 +38,28 @@ move.vsphere.list.vms() {
         shift
         _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
-      -s | --short )
-        _output=name
-      ;;
     esac
     shift
   done
 
   # main
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
-
+  [[ -z ${_profile} ]] && return ${exit_crit}
+  
   if  [[ ! -z  ${_name} ]]            && \
       [[ -d ${_path}/${_profile}/vms ]]; then
-      echo 10
-    _json=$( ${cmd_cat} ${_path}/${_profile}/vms/*.json 2>/dev/null | ${cmd_jq} '. | select( .Name == "'"${_name}"'" )' || (( _error_count++ )) )
+    _json=$( ${cmd_cat} ${_path}/${_profile}/vms/*.json 2>/dev/null | ${cmd_jq} '. | select( .Name | ascii_downcase == "'"${_name}"'" )' || (( _error_count++ )) )
 
   elif  [[ ! -z ${_filter} ]] && \
         [[ -d ${_path}/${_profile}/vms ]]; then
-        echo 20
+
     _json=$( ${cmd_cat} ${_path}/${_profile}/vms/*.json 2>/dev/null | ${cmd_jq} '. | select(( .Name? | ascii_downcase ) | match("'"${_filter}"'"))' || (( _error_count++ )) )
 
   elif  [[ -d ${_path}/${_profile}/vms ]]; then
-  echo 30
+
     _json=$( ${cmd_cat} ${_path}/${_profile}/vms/*.json 2>/dev/null 2>/dev/null | ${cmd_jq} -c || (( _error_count++ )) )
 
   else
-  echo 40
+
     _exit_code=${exit_crit}
 
   fi

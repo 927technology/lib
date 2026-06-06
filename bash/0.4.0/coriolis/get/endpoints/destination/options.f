@@ -10,7 +10,7 @@ coriolis.get.endpoints.destination.options() {
   # local variables
   local _count_options=0
   local _id=
-  local _json=
+  local _json="{}"
   local _name=
   local _path=~move/coriolis
 
@@ -29,9 +29,9 @@ coriolis.get.endpoints.destination.options() {
   # parse arguments
   while [[ "${1}" != "" ]]; do
     case "${1}" in
-      -p  | --profile | -n | --name )
+      -p  | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift
@@ -39,31 +39,31 @@ coriolis.get.endpoints.destination.options() {
 
   # main
   # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile move.set.profile --name <profile name>"; return ${exit_crit}; }
 
   # clear cached data
   [[ -d ${_path}/${_profile}/endpoints/destination/options ]] && ${cmd_rm} -rf ${_path}/${_profile}/endpoints/destination/options
   ${cmd_mkdir} -p ${_path}/${_profile}/endpoints/destination/options
 
-  for endpoint in $( move.coriolis.list.endpoints --profile ${_profile} --output name ); do
-    # zero out loop variables
-    _json="{}"
+  # set endpoint
+  move.coriolis.set.endpoint --profile ${_profile}
 
-    for option in $( ${cmd_coriolis} endpoint destination options list --format json  ${endpoint} 2>/dev/null | ${cmd_jq} -c '.[]' ); do 
-      # set option values
-      _json=$( json.set --json ${_json} --key .options[${_count_options}].name     --value $( ${cmd_echo} ${option} | ${cmd_jq} -r '."Option Name"' )                     || (( _error_count++ )) )
-      _json=$( json.set --json ${_json} --key .options[${_count_options}].values   --value $( ${cmd_echo} ${option} | ${cmd_jq} -r '."Possible Values"' | ${cmd_jq} -c )  || (( _error_count++ )) )
-      _json=$( json.set --json ${_json} --key .options[${_count_options}].default  --value $( ${cmd_echo} ${option} | ${cmd_jq} -r '."Configuration Default"' )           || (( _error_count++ )) )
-      
-      shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: ${endpoint}, Option:$( ${cmd_echo} ${option} | ${cmd_jq} -r '."Option Name"' ) "
-
-      (( _count_options++ ))
+  for option in $( ${cmd_coriolis} endpoint destination options list --format json  $( move.coriolis.list.active --profile ${_profile} --output name ) 2>/dev/null | ${cmd_jq} -c '.[]' ); do 
+  
+  # echo "${option}" | jq
+    # set option values
+    _json=$( json.set --json ${_json} --key .options[${_count_options}].name     --value $( ${cmd_echo} ${option} | ${cmd_jq} -r '."Option Name"' )                     || (( _error_count++ )) )
+    _json=$( json.set --json ${_json} --key .options[${_count_options}].values   --value $( ${cmd_echo} ${option} | ${cmd_jq} -r '."Possible Values"' | ${cmd_jq} -c )  || (( _error_count++ )) )
+    _json=$( json.set --json ${_json} --key .options[${_count_options}].default  --value $( ${cmd_echo} ${option} | ${cmd_jq} -r '."Configuration Default"' )           || (( _error_count++ )) )
     
-    done
-    # output json
-    ${cmd_echo} "${_json}" > ${_path}/${_profile}/endpoints/destination/options/${endpoint}.json
+    shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( move.coriolis.list.active --profile ${_profile} --output name ), Option:$( ${cmd_echo} ${option} | ${cmd_jq} -r '."Option Name"' ) "
+
+    (( _count_options++ ))
   
   done
+
+  # output json
+  ${cmd_echo} "${_json}" > ${_path}/${_profile}/endpoints/destination/options/$( move.coriolis.list.active --profile ${_profile} --output name ).json
 
   shell.log "${FUNCNAME}(${_profile}) - [Compete]"
 

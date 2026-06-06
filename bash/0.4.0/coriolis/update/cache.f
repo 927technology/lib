@@ -22,7 +22,7 @@ coriolis.update.cache() {
     case ${1} in
       -p  | --profile | -n | --name )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift
@@ -30,13 +30,14 @@ coriolis.update.cache() {
 
   # main
   # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile move.set.profile --name <profile name>"; return ${exit_crit}; }
 
   for resource in $( ${cmd_echo} ${_resources} | ${cmd_sed} 's/,/\n/g' ); do
     shell.log "${FUNCNAME}(${_profile}) - [UPDATING] $( ${cmd_echo} ${resource} | ucase )"
 
     coriolis.get.${resource} --profile ${_profile} || (( _error_count++ ))
-
+  
+    ${cmd_echo}
   done
 
   # exit

@@ -1,4 +1,10 @@
 move.coriolis.list.endpoints.networks() {
+  #_description: Displays networks cached from the Coriolis Server
+  #_filter: true
+  #_name: true
+  #_arguments: --filter,--name,--output
+  #_output: id,endpoint,endpoint_id,name,olvm_datacenter,vlan
+
   # local variables
   local _json=
   local _path=~move/coriolis
@@ -8,6 +14,7 @@ move.coriolis.list.endpoints.networks() {
   local _filter=
   local _name=
   local _output=
+  local _profile=
 
   # control variables
   local _exit_code=${exit_unkn}
@@ -28,17 +35,23 @@ move.coriolis.list.endpoints.networks() {
         shift
         _output="${1}"
       ;;
+      -p | --profile )
+        shift
+        _profile=$( ${cmd_echo} "${1}" | lcase )
+      ;;
     esac
     shift
   done
 
   # main
-  if  [[ ! -z  ${_name} ]]            && \
-      [[ -d ${_path}/${MOVE_PROFILE}/endpoints/networks ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/networks/*.json 2>/dev/null | ${cmd_jq} -c '. | select( ( .name.parts[0] | ascii_downcase ) == "'"${_name}"'" )' && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
+  [[ -z ${_profile} ]] && return ${exit_crit}
 
-  elif  [[ -d ${_path}/${MOVE_PROFILE}/endpoints/networks ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/networks/*.json 2>/dev/null | ${cmd_jq} -c && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
+  if  [[ ! -z  ${_name} ]]            && \
+      [[ -d ${_path}/${_profile}/endpoints/networks ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/endpoints/networks/*.json 2>/dev/null | ${cmd_jq} -c '. | select( ( .name.parts[0] | ascii_downcase ) == "'"${_name}"'" )' && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
+
+  elif  [[ -d ${_path}/${_profile}/endpoints/networks ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/endpoints/networks/*.json 2>/dev/null | ${cmd_jq} -c && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
   
   else
     _exit_code=${exit_crit}

@@ -8,15 +8,16 @@ is_integer() {
   local _exit_string=
 
   while read -r _data; do
-    if  [ ${_data} -ge 0 2>/dev/null ] || \
-        [ ${_data} -le 0 2>/dev/null ]; then
-
-        _exit_string=${_data}
+    case ${_data} in
+      ''|*[!0-9]*) 
+        _exit_string=${false}
         _exit_code=${exit_ok}
-    else
-        _exit_code=${exit_crit} 
-
-    fi
+      ;;
+      *) 
+        _exit_string=${true}
+        _exit_code=${exit_ok} 
+      ;;
+    esac
   done
 
   # exit

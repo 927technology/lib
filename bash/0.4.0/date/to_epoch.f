@@ -55,7 +55,7 @@ to_epoch() {
       ;;
 
       # mm/dd/yy hh:mm
-      [0-9][0-9]/[0-9][0-9]/[0-9][0-9]*[0-9][0-9]*[0-9][0-9] )
+      [0-9]?[0-9]/[0-9]?[0-9]/[0-9][0-9]*[0-9]?[0-9]*[0-9][0-9] )
         case $( ${cmd_uname} -s ) in
           Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y %H:%M" +%s "${_data}" )    ;;
           Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
@@ -76,6 +76,60 @@ to_epoch() {
       [0-9][0-9]/[0-9][0-9]/[0-9][0-9] )
         case $( ${cmd_uname} -s ) in
           Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y" +%s "${_data}" )          ;;
+          Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
+        esac
+        [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+      ;;
+
+      # m/d/yy h:mm
+      [0-9]/[0-9]/[0-9][0-9]*[0-9]:[0-9][0-9] )
+        case $( ${cmd_uname} -s ) in
+          Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y %H:%M" +%s "${_data}" )   ;;
+          Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
+        esac
+        [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+      ;;
+
+      # m/d/yy hh:mm
+      [0-9]/[0-9]/[0-9][0-9]*[0-9][0-9]:[0-9][0-9] )
+        case $( ${cmd_uname} -s ) in
+          Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y %H:%M" +%s "${_data}" )   ;;
+          Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
+        esac
+        [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+      ;;
+
+      # mm/d/yy h:mm
+      [0-9][0-9]/[0-9]/[0-9][0-9]*[0-9]:[0-9][0-9] )
+        case $( ${cmd_uname} -s ) in
+          Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y %H:%M" +%s "${_data}" )   ;;
+          Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
+        esac
+        [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+      ;;
+
+      # mm/d/yy hh:mm
+      [0-9][0-9]/[0-9]/[0-9][0-9]*[0-9][0-9]:[0-9][0-9] )
+        case $( ${cmd_uname} -s ) in
+          Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y %H:%M" +%s "${_data}" )   ;;
+          Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
+        esac
+        [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+      ;;
+
+      # m/dd/yy h:mm
+      [0-9]/[0-9][0-9]/[0-9][0-9]*[0-9]:[0-9][0-9] )
+        case $( ${cmd_uname} -s ) in
+          Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y %H:%M" +%s "${_data}" )   ;;
+          Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
+        esac
+        [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}
+      ;;
+
+      # m/dd/yy hh:mm
+      [0-9]/[0-9][0-9]/[0-9][0-9]*[0-9]:[0-9][0-9] )
+        case $( ${cmd_uname} -s ) in
+          Darwin  ) _exit_string=$( ${cmd_date} -j -f "%m/%d/%y %H:%M" +%s "${_data}" )   ;;
           Linux   ) _exit_string=$( ${cmd_date} --date="${_data}" +"%s" ) ;;
         esac
         [[ ${?} == ${exit_ok} ]] && _exit_code=${exit_ok} || _exit_code=${exit_crit}

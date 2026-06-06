@@ -1,21 +1,8 @@
 move.coriolis.set.endpoint() {
-  # global variables
-  declare -g OS_PROJECT_DOMAIN_NAME=
-  declare -g OS_USER_DOMAIN_NAME=
-  declare -g OS_PROJECT_NAME=
-  declare -g OS_TENANT_NAME=
-  declare -g OS_USERNAME=
-  declare -g OS_PASSWORD=
-  declare -g OS_AUTH_URL=
-  declare -g OS_INTERFACE=
-  declare -g OS_ENDPOINT_TYPE=
-  declare -g OS_IDENTITY_API_VERSION=
-  declare -g OS_REGION_NAME=
-  declare -g OS_AUTH_PLUGIN=
-  declare -g OS_CACERT= 
-
   # argument variables
   local _name=
+  local _profile=
+  local _verbose=${true}
 
   # control variables
   local _error_count=0
@@ -28,192 +15,211 @@ move.coriolis.set.endpoint() {
   # parse arguments
   while [[ ${1} != "" ]]; do
     case ${1} in
-      -e | --endpoint | -h | --host | -n  | --name )
+      -e | --endpoint | -n  | --name )
         shift
         _name="${1}"
+      ;;
+      -p  | --profile )
+        shift
+        _profile="${1}"
+      ;;
+      -v | --verbose )
+        _verbose=${true}
       ;;
     esac
     shift
   done
 
   # main
-  if [[ ! -z ${MOVE_PROFILE} ]]; then
-    _json=$( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -c '[[ .[] | select(( .name == "'"${MOVE_PROFILE}"'" ) and .enable == '${true}' ) ] | [ .[0].coriolis[] | select(( .endpoint == "'"${_name}"'") and .enable == 1 ) ] | .[0] ]' )
-    if  [[ ! -z ${_name} ]]             && \
-        [[ ! -z ${MOVE_PROFILE} ]]   && \
-        [[ $( ${cmd_echo} "${_json}" | ${cmd_jq} '. | length' ) > 0 ]]; then
+  [[ -z ${_profile} ]] && exit ${exit_crit}
 
-      
+  if [[ ! -z ${_profile} ]]; then
+
+    # get secrets
+    move.get.secrets --profile ${_profile}
+
+    # get connect file info
+    _json=$( ${cmd_cat} /usr/local/etc/move/connect.json | ${cmd_jq} -c '[[ .[] | select(( .name == "'"${_profile}"'" ) and .enable == '${true}' ) | .coriolis[] | select( .enable == '${true}' ) ] | .[0] ]' )
+
+    if  [[ $( ${cmd_echo} ${_json} | ${cmd_jq} '. | length' ) > 0 ]]; then
+
       # unset existing env_vars
       # for env_var in $( set | ${cmd_awk} '{FS="="} /^CORIOLIS_/ {print $1}' ); do 
       for env_var in OS_PROJECT_DOMAIN_NAME OS_USER_DOMAIN_NAME OS_PROJECT_NAME OS_TENANT_NAME OS_USERNAME OS_PASSWORD OS_AUTH_URL OS_INTERFACE OS_ENDPOINT_TYPE OS_IDENTITY_API_VERSION OS_REGION_NAME OS_AUTH_PLUGIN OS_CACERT; do    
         if [[ ! -z ${env_var} ]]; then
           unset ${env_var}
+
           if [[ ${?} == ${exit_ok} ]]; then
-            shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, ${env_var} unset"
+            [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), ${env_var} unset"
 
           else
-            shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, ${env_var} unset"
+            [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), ${env_var} unset"
             (( _error_count++ ))
 
           fi
 
         else
-          shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, ${env_var} not set"
+          [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), ${env_var} not set"
 
         fi
       
       done
 
       # set credentials
-      export CORIOLIS_NAME=${_name}
+      export CORIOLIS_NAME=$( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, CORIOLIS_NAME exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), CORIOLIS_NAME: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, CORIOLIS_NAME export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_PROJECT_DOMAIN_NAME=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.project.domain.name'      )
+      export OS_PROJECT_DOMAIN_NAME=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.project.domain.name' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_PROJECT_DOMAIN_NAME exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_PROJECT_DOMAIN_NAME: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.project.domain.name' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}} - [FAILURE] End Point ${_name}, OS_PROJECT_DOMAIN_NAME export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}} - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_USER_DOMAIN_NAME=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.user.domain.name'      )
+      export OS_USER_DOMAIN_NAME=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.user.domain.name' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_USER_DOMAIN_NAME exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_USER_DOMAIN_NAME: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.user.domain.name' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_USER_DOMAIN_NAME export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_PROJECT_NAME=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].project.name'      )
+      export OS_PROJECT_NAME=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].project.name' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_PROJECT_NAME exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_PROJECT_NAME: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].project.name' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_PROJECT_NAME export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_TENANT_NAME=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].tenant.name'      )
+      export OS_TENANT_NAME=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].tenant.name' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_TENANT_NAME exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_TENANT_NAME: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].tenant.name' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_TENANT_NAME export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_TENANT_NAME export"
         (( _error_count++ ))
 
       fi
 
-      export OS_USERNAME=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.user.name'      )
+
+      export OS_USERNAME=$(                                                            \
+        move.list.secrets                                                               \
+          --secret $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].auth.vault.credential.name' ) \
+          --output username                                                             \
+      )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_USERNAME exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_USERNAME: $( move.list.secrets --secret $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].auth.vault.credential.name' ) --output username ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_USERNAME export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_PASSWORD=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.user.password'      )
+      export OS_PASSWORD=$(                                                            \
+        move.list.secrets                                                               \
+          --secret $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].auth.vault.credential.name' ) \
+          --output password                                                            \
+      )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_PASSWORD exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_PASSWORD: ************** exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_PASSWORD export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_AUTH_URL=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.url'      )
+      export OS_AUTH_URL=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.url' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_AUTH_URL exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_AUTH_URL: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.url' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_AUTH_URL export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_INTERFACE=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.interface'      )
+      export OS_INTERFACE=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.interface' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_INTERFACE exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_INTERFACE: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.interface' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_INTERFACE export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_ENDPOINT_TYPE=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.endpoint_type'      )
+      export OS_ENDPOINT_TYPE=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.endpoint_type' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_ENDPOINT_TYPE exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_ENDPOINT_TYPE: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.endpoint_type' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}} - [FAILURE] End Point ${_name}, OS_ENDPOINT_TYPE export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}} - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_IDENTITY_API_VERSION=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.version'      )
+      export OS_IDENTITY_API_VERSION=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.version' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_IDENTITY_API_VERSION exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_IDENTITY_API_VERSION: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].api.version' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_IDENTITY_API_VERSION export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_REGION_NAME=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].region'      )
+      export OS_REGION_NAME=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].region' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_REGION_NAME exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_REGION_NAME: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].region' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_REGION_NAME export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_AUTH_PLUGIN=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.plugin'      )
+      export OS_AUTH_PLUGIN=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.plugin' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_AUTH_PLUGIN exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_AUTH_PLUGIN: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].auth.plugin' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_AUTH_PLUGIN export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
-      export OS_CACERT=$(      ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].cert'      )
+      export OS_CACERT=$( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].cert' )
       if [[ ${?} == ${exit_ok} ]]; then
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [SUCCESS] End Point: ${_name}, OS_CACERT exported"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), OS_CACERT: $( ${cmd_echo} "${_json}"  | ${cmd_jq} -r '.[0].cert' ) exported"
 
       else
-        shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, OS_CACERT export"
+        [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' )"
         (( _error_count++ ))
 
       fi
 
     else
-      shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, syntax"
+      [[ ${_verbose} == ${true} ]] && shell.log "${FUNCNAME}(${_profile}) - [FAILURE] End Point $( ${cmd_echo} ${_json} | ${cmd_jq} -r '.[0].endpoint' ), syntax"
       (( _error_count++ ))
 
     fi
-
-  else
-      shell.log "${FUNCNAME}(${MOVE_PROFILE}) - [FAILURE] End Point ${_name}, MOVE_PROFILE not set"
 
   fi
 

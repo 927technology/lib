@@ -4,6 +4,7 @@ move.list.transfers() {
   local _path=~move/move
 
   # argument variables
+  local _enable=
   local _filter=
   local _name=
   local _output=
@@ -16,6 +17,12 @@ move.list.transfers() {
   # parse arguments
   while [[ ${1} != "" ]]; do 
     case ${1} in
+      -d | --disable )
+        _enable=${false}
+      ;;
+      -e | --enable )
+        _enable=${true}
+      ;;
       -f | --filter )
         shift
         _filter=$( ${cmd_echo} "${1}" | lcase )
@@ -49,15 +56,20 @@ move.list.transfers() {
   
   if  [[ ! -z  ${_name} ]]    && \
       [[ -f ${_path}/${_profile}/transfers/${_name} ]]; then
-    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/${_name} 2>/dev/null && _exit_code=${exit_ok} || _exit_code=${exit_crit} )
+    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/${_name} 2>/dev/null | ${cmd_jq} -c )
 
   elif  [[ ! -z ${_filter} ]] && \
         [[ -d ${_path}/${_profile}/transfers ]]; then
-    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/*.json 2>/dev/null | ${cmd_jq} '. | select(( .name? | ascii_downcase ) | match("'"${_filter}"'"))' )
+    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/*.json 2>/dev/null | ${cmd_jq} -c '. | select(( .name? | ascii_downcase ) | match("'"${_filter}"'"))' )
 
   else
-    _exit_code=${exit_crit}
+    _json=$( ${cmd_cat} ${_path}/${_profile}/transfers/*.json 2>/dev/null | ${cmd_jq} -c )
 
+  fi
+
+  # filter for enabled hosts
+  if  [[ ! -z ${_enable} ]]; then
+    _json=$( ${cmd_echo} ${_json} | ${cmd_jq} 'select( .move.coriolis.enable == '${_enable}' )' )
   fi
 
   if [[ ! -z ${_output} ]]; then

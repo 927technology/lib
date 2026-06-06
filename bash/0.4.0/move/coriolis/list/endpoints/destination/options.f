@@ -1,10 +1,15 @@
 move.coriolis.list.endpoints.destination.options() {
+  #_description: Displays cached coriolis destination deployment options
+  #_filter: false
+  #_name: false
+  #_arguments: --name,--output,--status
+  #_output: date,epoch,id,transfer_id,instances,name,notes,status
 
   IFS=$'\n'.   # because IFS sucks
 
   # local variables
-  local _json=
-  local _json_type=
+  local _json="{}"
+  local _json_type="{}"
   local _path=~move/coriolis
 
   # argument variables
@@ -18,8 +23,8 @@ move.coriolis.list.endpoints.destination.options() {
   local _exit_string=
 
   # parse arguments
-  while [[ ${1} != "" ]]; do 
-    case ${1} in
+  while [[ "${1}" != "" ]]; do 
+    case "${1}" in
       -e | --endpoint )
         shift
         _endpoint=$( ${cmd_echo} "${1}" | lcase )
@@ -41,14 +46,16 @@ move.coriolis.list.endpoints.destination.options() {
   done
 
   # main
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile with the --profile <profile name> flag"; return ${exit_crit}; }
+
   # endpoint is defined
   if    [[ ! -z ${_endpoint}                                                ]] && \
-        [[ -d ${_path}/${MOVE_PROFILE}/endpoints/options/destination/*.json ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/options/destination/*.json | ${cmd_jq} -c '.destination[] | select( .endpoint == "'"${_endpoint}"'" )' )
+        [[ -d ${_path}/${_profile}/endpoints/destination/options ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/endpoints/destination/options/${_endpoint}.json | ${cmd_jq} -c 'if(.options) then . else empty end | .options[]' )
 
   # endpoint is not defined
-  elif  [[ -d ${_path}/${MOVE_PROFILE}/endpoints/options/destination        ]]; then
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/options/destination/*.json | ${cmd_jq} -c '.destination[]' )
+  elif  [[ -d ${_path}/${_profile}/endpoints/destination/options        ]]; then
+    _json=$( ${cmd_cat} ${_path}/${_profile}/endpoints/destination/options/*.json | ${cmd_jq} -c 'if(.options) then . else empty end | .options[]' )
 
   fi
 
@@ -73,18 +80,17 @@ move.coriolis.list.endpoints.destination.options() {
         # coriolis does not have a type for storage_mappings, subsituting migr_minoin_storage_domain
         case ${_type} in
           storage_mappings )
-            _json_type=${_json_type}$( ${cmd_echo} ${destination} | ${cmd_jq} -r '. | select( ."Option Name" == "migr_minion_storage_domain" )."Possible Values"' | ${cmd_jq} -c '.[]' )
+            _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '. | select( .name == "migr_minion_storage_domain" ).values[]' )
 
           ;;
           * )
-            _json_type=${_json_type}$( ${cmd_echo} ${destination} | ${cmd_jq} -r '. | select( ."Option Name" == "'"${_type}"'" )."Possible Values"' | ${cmd_jq} -c '.[]' )
-          
+            _json=$( ${cmd_echo} ${_json} | ${cmd_jq} -c '. | select( .name == "'"${_type}"'" ).values[]' )
+
           ;;
         esac
       fi
     done
-
-    _json=$( ${cmd_echo} "${_json_type}" | ${cmd_jq} -c )
+    # _json=$( ${cmd_echo} "${_json_type}" | ${cmd_jq} -c )
   fi
 
   # name filter is defined

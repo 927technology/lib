@@ -1,7 +1,7 @@
 move.coriolis.create.transfers() {
   # description
   # WIP CM
-
+  IFS=$'\n'
   # local variables
   local _count_harddisks=0
   local _destination_keys=migr_blank_template,migr_minion_cluster,migr_minion_cluster,migr_minion_cluster
@@ -49,11 +49,11 @@ move.coriolis.create.transfers() {
       ;;
       -h | --host | -n | --name)
         shift
-        _name="${1}"
+        _name=$( ${cmd_echo} "${1}" | lcase )
       ;;
-      -p  | --profile | -n | --name )
+      -p  | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
       -t | --type )
         shift
@@ -75,17 +75,28 @@ move.coriolis.create.transfers() {
     esac
     shift
   done
-echo 0
   # main
-  # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+
+  # verify profile is set
+  [[ -z ${_profile} ]] && return ${exit_crit}
+
+
+  # set endpoint
+  move.coriolis.set.endpoint                                    \
+    --profile ${_profile}
 
   # create network map(s)
   if    [[ ! -z ${_name} ]]; then
-    move.list.transfers --name ${_name} | ${cmd_jq} | ${cmd_jq} -c > ${_tmp_file}
+    move.list.transfers                                         \
+      --name ${_name}                                           \
+      --profile ${_profile}                                     \
+    | ${cmd_jq} | ${cmd_jq} -c > ${_tmp_file}
 
   elif  [[ ! -z ${_filter} ]]; then
-    move.list.transfers --filter ${_filter} | ${cmd_jq} -c > ${_tmp_file}
+    move.list.transfers                                         \
+      --filter ${_filter}                                       \
+      --profile ${_profile}                                     \
+    | ${cmd_jq} -c > ${_tmp_file}
 
   fi
 
@@ -95,24 +106,30 @@ echo 0
     _user_script=
 
     # set endpoint
-    move.coriolis.set.endpoint --name $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.destination' )
+    move.coriolis.set.endpoint                                  \
+      --name $(                                                 \
+        ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.destination' \
+      )                                                         \
+      --profile ${_profile}               
 
     # get os family
-    _os_family=$( ${cmd_echo} ${host} | ${cmd_jq} -r '.move.coriolis.transfer.destination.os.family' )
-
+    _os_family=$(                                               \
+      ${cmd_echo} ${host} | ${cmd_jq} -r '.move.coriolis.transfer.destination.os.family' \
+    )
 
     # destination environment
     ## lookups
     for key in $( ${cmd_echo} ${_destination_keys} | ${cmd_sed} 's/,/\n/g' ); do
-      if [[ $( ${cmd_echo} ${host} | ${cmd_jq} 'if( .coriolis.transfer.destination.'$key' != null ) then '${true}' else '${false}' end' ) == ${true} ]]; then
+      if [[ $( ${cmd_echo} ${host} | ${cmd_jq} 'if( .coriolis.transfer.destination.'${key}' != null ) then '${true}' else '${false}' end' ) == ${true} ]]; then
         host=$(                                                                                     \
           json.set                                                                                  \
             --json ${host}                                                                          \
             --key .coriolis.transfer.destination.${key}                                             \
             --value $(                                                                              \
               move.coriolis.list.endpoints.destination.options                                      \
-                --type ${key} |                                                                     \
-              ${cmd_jq} '.[] | select( .name == "'$( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.destination.'${key} )'" ).id' \
+                --type          ${key}                                                              \
+                --profile       ${_profile} |                                                       \
+                  ${cmd_jq} '.[] | select( .name == "'$( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.destination.'${key} )'" ).id' \
             )                                                                                       \
         )
 
@@ -145,8 +162,9 @@ echo 0
           --json                  ${_json_network_map}                                              \
           --key                   .\"$( ${cmd_echo} ${networkadapter} | ${cmd_jq} -r '.vsphere.networkname' )\" \
           --value                 $(                                                                \
-            move.coriolis.list.endpoints.networks  |                                                \
-            ${cmd_jq} '.[] | select(( .move.network.datacenter == "'"$( ${cmd_echo} ${networkadapter} | ${cmd_jq} -r '.olvm.datacenter' )"'" ) and  .move.network.vlan == '$( ${cmd_echo} ${networkadapter} | ${cmd_jq} '.olvm.vlan' )').id'  
+            move.coriolis.list.endpoints.networks                                                   \
+              --profile           ${_profile} |                                                     \
+              ${cmd_jq} '.[] | select(( .move.network.datacenter == "'"$( ${cmd_echo} ${networkadapter} | ${cmd_jq} -r '.olvm.datacenter' )"'" ) and  .move.network.vlan == '$( ${cmd_echo} ${networkadapter} | ${cmd_jq} '.olvm.vlan' )').id'  
           )                                                                                         \
       )
 
@@ -163,6 +181,7 @@ echo 0
           move.coriolis.list.endpoints.storage                                                      \
             --name              $( ${cmd_echo} ${host} | ${cmd_jq} -r '.harddisks[0].olvm.domain' ) \
             --output            name                                                                \
+            --profile           ${_profile}                                                         \
         )                                                                                           \
     )
 
@@ -190,6 +209,7 @@ echo 0
             move.coriolis.list.endpoints.storage                                                    \
               --name              $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )        \
               --output            name                                                              \
+              --profile           ${_profile}                                                       \
           )                                                                                         \
       )
 
@@ -209,6 +229,7 @@ echo 0
             move.coriolis.list.endpoints.storage                                                    \
               --name              $( ${cmd_echo} ${harddisk} | ${cmd_jq} -r '.olvm.domain' )        \
               --output            name                                                              \
+              --profile           ${_profile}                                                       \
           )                                                                                         \
       )
 
@@ -224,10 +245,10 @@ echo 0
     )
 
     # create destination environment json
-    _json_destination_environment_map=$(  ${cmd_echo} ${host} | ${cmd_jq} '.coriolis.transfer.destination | del( .. | select( . == null ) )'  | ${cmd_jq} -c )
+    _json_destination_environment_map=$( ${cmd_echo} ${host} | ${cmd_jq} '.coriolis.transfer.destination | del( .. | select( . == null ) )'  | ${cmd_jq} -c )
     _json_destination_environment_map=$( json.append --json ${_json_destination_environment_map} --key . --value "${_json_storage_map}" )
     _json_destination_environment_map=$( json.set --json ${_json_destination_environment_map} --key .network_map --value "${_json_network_map}" )
-    
+
     if [[ ! -z ${_json_migration_template_password_map} ]]; then
       _json_destination_environment_map=$( json.set --json ${_json_destination_environment_map} --key .migr_template_password_map --value "${_json_migration_template_password_map}" )
     fi
@@ -238,10 +259,9 @@ echo 0
 
     # user scripts
     case ${_os_family} in
-      linux ) _user_script=/usr/local/scripts/linux.sh ;;
-      windows ) _user_script=/usr/local/scripts/windows.ps1 ;;
+      linux   ) _user_script=~move/scripts/linux.sh    ;;
+      windows ) _user_script=~move/scripts/windows.ps1 ;;
     esac
-
 
     # output command to screen - verbose output
     if [[ ${_verbose} == ${true} ]]; then
@@ -250,14 +270,14 @@ ${cmd_coriolis}
   transfer                                                                                                
   create                                                                                                  
 
-  # --destination-endpoint $( move.coriolis.list.endpoints --endpoint $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.destination' ) | ${cmd_jq} -r '.[-1].ID' )
+  # --destination-endpoint $( move.coriolis.list.endpoints --endpoint $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.destination' ) --profile ${_profile} | ${cmd_jq} -r '.[-1].ID' )
   --destination-endpoint $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.destination' )
 
   --destination-environment '${_json_destination_environment_map}'
   
-$( echo $_json_destination_environment_map | jq )
+$( ${cmd_echo} $_json_destination_environment_map | ${cmd_jq} )
 
-  # --origin-endpoint $( move.coriolis.list.endpoints --endpoint $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.source' ) | ${cmd_jq} -r '.[-1].ID' )
+  # --origin-endpoint $( move.coriolis.list.endpoints --endpoint $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.source' ) --profile ${_profile} | ${cmd_jq} -r '.[-1].ID' )
   --origin-endpoint $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.source' )
 
   --instance $(  ${cmd_echo} ${host} | ${cmd_jq} -r '.vsphere.server.datacenter' )/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.vsphere.host.folder.name' )/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name' )
@@ -275,7 +295,6 @@ $( echo $_json_destination_environment_map | jq )
 EOF.Transfer
 
     fi
-
 
     # # only create if no other transfer exists
     # move.coriolis.validate.transfers --name ${_name}
@@ -297,15 +316,14 @@ EOF.Transfer
             --origin-endpoint $( ${cmd_echo} ${host} | ${cmd_jq} -r '.coriolis.transfer.endpoint.source' ) \
             --scenario ${_type}                                                                         \
             --source-environment $(  ${cmd_echo} ${host} | ${cmd_jq} '.coriolis.transfer.source | del( .. | select( . == null ) )' | ${cmd_jq} -c ) \
-            --user-script-global ${_os_family}=${_user_script}                                          \
               | ${cmd_jq} -c 
         )
+            # --user-script-global ${_os_family}=${_user_script}                                          \
    
-
         # write the transfer data to the host transfer
         if [[ ${?} == ${exit_ok} ]]; then
-          shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] ID:$(  ${cmd_echo} ${_json_output} | ${cmd_jq} -r '.id' ), VM: ${_name}"
-      
+          shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] ID:$(  ${cmd_echo} ${_json_output} | ${cmd_jq} -r '.id' ), VM: $( ${cmd_echo} ${host} | ${cmd_jq} -r '.name' )"
+
           # write transfer output to vm json
           if  ( [[ ! -z ${_json_output}     ]] ||                                                       \
                 [[ ${_json_output} != "{}"  ]]                                                          \
@@ -314,10 +332,17 @@ EOF.Transfer
             [[ $( ${cmd_echo} ${_json_output} | is_json ) == ${true} ]]; then
             
             # create output directory
-            [[ ! -d ${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name' ) ]] && ${cmd_mkdir} --parents ${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name' )
-            
+            if [[ ! -d ${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name | ascii_downcase' ) ]]; then
+              shell.log "${FUNCNAME}(${_profile}) - [CREATING] "${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name | ascii_downcase' )
+              ${cmd_mkdir} --parents ${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name | ascii_downcase' )
+
+            else
+              shell.log "${FUNCNAME}(${_profile}) - [EXISTS] "${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name | ascii_downcase' )
+
+            fi
+
             # output json
-            ${cmd_echo} ${_json_output} > ${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name' )/$(  ${cmd_echo} ${_json_output} | ${cmd_jq} -r '.id' ).json
+            ${cmd_echo} ${_json_output} > ${_path}/${_profile}/transfers/create/$(  ${cmd_echo} ${host} | ${cmd_jq} -r '.name | ascii_downcase' )/$(  ${cmd_echo} ${_json_output} | ${cmd_jq} -r '.id' ).json
           fi
 
         #   # update coriolis transfer cache
@@ -327,14 +352,13 @@ EOF.Transfer
 
       else
         shell.log "${FUNCNAME}(${_profile}) - [FAILURE] "
-      
+
       fi
 
     # else
     #   shell.log "${FUNCNAME}(${_profile}) - [FAILURE] Transfer Exists, VM: ${_name} Transfer: $( move.coriolis.validate.transfers --name ${_name} --output id )"
 
     # fi
-
 
   done
 

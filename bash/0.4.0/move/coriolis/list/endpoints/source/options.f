@@ -32,15 +32,13 @@ move.coriolis.list.endpoints.source.options() {
 
   # main
   if    [[ ! -z ${_endpoint} ]] && \
-        [[ -d ${_path}/${MOVE_PROFILE}/endpoints/options/source/*.json ]]; then
+        [[ -d ${_path}/${MOVE_PROFILE}/endpoints/source/options/*.json ]]; then
     _json= $( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/options/source/*.json | ${cmd_jq} -c '. | select( .endpoint == "'"${_endpoint}"'" )' )
 
-  elif  [[ -d ${_path}/${MOVE_PROFILE}/endpoints/options/source/*.json ]]; then
+  elif  [[ -d ${_path}/${MOVE_PROFILE}/endpoints/source/options/*.json ]]; then
     _json= $( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/options/source/*.json | ${cmd_jq} -c )
 
   fi
-
-echo $_type
 
   if  [[ ! -z ${_type} ]]; then
     echo 10
@@ -86,8 +84,7 @@ echo $_type
     # esac
   
   else
-  echo 20
-    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/options/source/*.json | ${cmd_jq} -c )
+    _json=$( ${cmd_cat} ${_path}/${MOVE_PROFILE}/endpoints/source/options/*.json | ${cmd_jq} -c )
 
   fi
 

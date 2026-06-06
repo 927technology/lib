@@ -26,9 +26,9 @@ coriolis.get.endpoints.networks() {
   # parse arguments
   while [[ "${1}" != "" ]]; do
     case "${1}" in
-      -p  | --profile | -n | --name )
+      -p  | --profile )
         shift
-        _profile="${1}"
+        _profile=$( ${cmd_echo} "${1}" | lcase )
       ;;
     esac
     shift
@@ -36,23 +36,23 @@ coriolis.get.endpoints.networks() {
 
   # main
   # set credentials
-  [[ -z ${_profile} ]] && _profile=${MOVE_PROFILE}
+  [[ -z ${_profile} ]] && { shell.log "${FUNCNAME}(${_profile}) - [PROFILE] Profile is not set.   Set profile move.set.profile --name <profile name>"; return ${exit_crit}; }
 
   # clear cached data
   [[ -d ${_path}/${_profile}/endpoints/networks ]] && ${cmd_rm} -rf ${_path}/${_profile}/endpoints/networks
   ${cmd_mkdir} -p ${_path}/${_profile}/endpoints/networks
 
-  for endpoint in $( move.coriolis.list.active --output name || (( _error_count++ )) ); do
-    # zero out loop variables
+  for endpoint in $( move.coriolis.list.active --output name --profile ${_profile}|| (( _error_count++ )) ); do
+
     _json_endpoint="{}"
 
     # set endpoint
-    move.coriolis.set.endpoint --name ${endpoint}
+    move.coriolis.set.endpoint --name $( move.coriolis.list.active --output name --profile ${_profile} ) --profile ${_profile}
 
     # get endpoint data
-    _json_endpoint=$( move.coriolis.list.endpoints --name ${endpoint} | ${cmd_jq} -c '.[]' )
+    _json_endpoint=$( move.coriolis.list.endpoints --name $( move.coriolis.list.active --output name --profile ${_profile} ) --profile ${_profile} | ${cmd_jq} -c '.[]' )
 
-    for network in $( ${cmd_coriolis} endpoint network list -f json  ${endpoint} 2>/dev/null | ${cmd_jq} -c '.[]' ); do 
+    for network in $( ${cmd_coriolis} endpoint network list -f json  $( move.coriolis.list.active --output name --profile ${_profile} ) 2>/dev/null | ${cmd_jq} -c '.[]' ); do 
       # zero out loop variables
       _count_name=0
       _json="{}"
@@ -62,7 +62,7 @@ coriolis.get.endpoints.networks() {
       # set endpoint values
       _json=$( json.set --json "${_json}" --key .endpoint.id --value $( ${cmd_echo} ${_json_endpoint} | ${cmd_jq} '.ID' ) )
       _json=$( json.set --json "${_json}" --key .endpoint.id --value $( ${cmd_echo} ${_json_endpoint} | ${cmd_jq} '.Name' ) )
-      _json=$( json.set --json "${_json}" --key .endpoint.name --value ${endpoint} )
+      _json=$( json.set --json "${_json}" --key .endpoint.name --value $( move.coriolis.list.active --output name --profile ${_profile} ) )
       _json=$( json.set --json "${_json}" --key .olvm.datacenter --value $( ${cmd_echo} ${network} | ${cmd_jq} -r '.Name | split("/")[0] | if( . | split("_")[0] == "ovirtmgmt" ) then "default" else ( . | split("_")[0] ) end' ) )
       _json=$( json.set --json "${_json}" --key .olvm.domain --value ${_name} )
 
@@ -76,16 +76,17 @@ coriolis.get.endpoints.networks() {
       while [[ ${_count_name} < $( ${cmd_echo} ${network} | ${cmd_jq} '.Name | split("/") | length' ) ]]; do
         _json=$( json.set --json "${_json}" --key .name.parts[${_count_name}] --value $( ${cmd_echo} ${network} | ${cmd_jq} -r '.Name | split("/")['${_count_name}']' ) )
         (( _count_name++ ))
-      
+
       done
 
       # output json
       ${cmd_echo} "${_json}" > ${_path}/${_profile}/endpoints/networks/$( ${cmd_echo} ${network} | ${cmd_jq} -r '.ID' ).json
       ${cmd_ln} -fs $( ${cmd_echo} ${network} | ${cmd_jq} -r '.ID' ).json ${_path}/${_profile}/endpoints/networks/$( ${cmd_echo} ${network} | ${cmd_jq} -r '.Name | split("/")[0]' )
       
-      shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: ${endpoint}, Data Center:$( ${cmd_echo} ${network} | ${cmd_jq} -r '.Name | split("/")[0] | split("_")[0]' ), VLAN: $( ${cmd_echo} ${network} | ${cmd_jq} -r '.Name | split("/")[0] | split("_")[1]' | ${cmd_sed} 's/^VL//g' )"
+      shell.log "${FUNCNAME}(${_profile}) - [SUCCESS] End Point: $( move.coriolis.list.active --output name --profile ${_profile} ), Data Center:$( ${cmd_echo} ${network} | ${cmd_jq} -r '.Name | split("/")[0] | split("_")[0]' ), VLAN: $( ${cmd_echo} ${network} | ${cmd_jq} -r '.Name | split("/")[0] | split("_")[1]' | ${cmd_sed} 's/^VL//g' )"
 
     done
+
   done
 
   shell.log "${FUNCNAME}(${_profile}) - [COMPLETE]"
