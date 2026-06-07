@@ -51,26 +51,26 @@ shell.create.directory() {
 
       # make ${_directory}      
       if ${cmd_mkdir} --parents ${_directory}; then
-        shell.log --screen --message "CREATE: ${_directory} SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
+        shell.print "CREATE: ${_directory} SUCCESS"
       
       else
-        shell.log --screen --message "CREATE: ${_directory} FAILED" --tag ${_tag} --remote-server ${LOG_SERVER}
+        shell.print "CREATE: ${_directory} FAILED"
         (( _error_count++ ))
       fi
 
     # directory exists
     elif [[ -d ${_directory} ]]; then
-      shell.log --screen --message "CREATE: ${_directory} EXISTS" --tag ${_tag} --remote-server ${LOG_SERVER}
+      shell.print "CREATE: ${_directory} EXISTS"
     
     fi
 
     # set owner/group ${_directory}
     if [[ -d ${_directory} ]] && ( [[ ! -z ${_group} ]] || [[ ! -z ${_owner} ]] ); then
       if ${cmd_chown} ${_recursive} ${_owner}:${_group} ${_directory}; then
-        shell.log --screen --message "SET: owner/group(${_owner}:${_group}) ${_directory} SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
+        shell.print "SET: owner/group(${_owner}:${_group}) ${_directory} SUCCESS"
       
       else
-        shell.log --screen --message "SET: owner/group(${_owner}:${_group}) ${_directory} FAILED" --tag ${_tag} --remote-server ${LOG_SERVER}
+        shell.print "SET: owner/group(${_owner}:${_group}) ${_directory} FAILED"
         (( _error_count++ ))
       
       fi
@@ -80,10 +80,10 @@ shell.create.directory() {
     if [[ -d ${_directory} ]] && [[ ! -z ${_mode} ]]; then
 
       if ${cmd_chmod} ${_mode} ${_recursive} ${_directory}; then
-        shell.log --screen --message "SET: mode(${_mode}) ${_directory} SUCCESS" --tag ${_tag} --remote-server ${LOG_SERVER}
+        shell.print "SET: mode(${_mode}) ${_directory} SUCCESS"
 
       else
-        shell.log --screen --message "SET: mode(${_mode}) ${_directory} FAILED" --tag ${_tag} --remote-server ${LOG_SERVER}
+        shell.print "SET: mode(${_mode}) ${_directory} FAILED"
         (( _error_count++ ))
 
       fi
