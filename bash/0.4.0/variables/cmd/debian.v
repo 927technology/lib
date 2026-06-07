@@ -38,5 +38,6 @@ cmd_tail=/usr/bin/tail
 cmd_tar=/usr/bin/tar
 cmd_touch=/bin/touch
 cmd_unixcat=/bin/unixcat
+cmd_uname=/usr/bin/uname
 cmd_update_grub=/usr/sbin/update-grub
 cmd_useradd=/usr/sbin/useradd
