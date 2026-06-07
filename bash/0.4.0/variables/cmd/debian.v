@@ -16,6 +16,7 @@ cmd_dpkg=/usr/bin/dpkg
 cmd_echo=/bin/echo
 cmd_git=/usr/bin/git
 cmd_head=/usr/bin/head
+cmd_java=/usr/bin/java
 cmd_jq=/usr/bin/jq
 cmd_kill=/bin/kill
 cmd_logger=/usr/bin/logger
